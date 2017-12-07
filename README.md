@@ -1,0 +1,23 @@
+# Dependencies
+
+If you have Anaconda installed, first do:
+
+```{r, engine='bash', count_lines}
+conda install libgcc
+```
+
+To install gym with Atari_py:
+
+```{r, engine='bash', count_lines}
+# Install dependencies
+apt-get install -y python-numpy python-dev cmake zlib1g-dev libjpeg-dev xvfb libav-tools xorg-dev python-opengl libboost-all-dev libsdl2-dev swig
+
+# Install gym and atari_py rom repository
+git clone https://github.com/openai/gym.git
+cd gym
+pip install -e '.[all]'
+pip install -e '.[atari]'
+```
+
+
+Mot gentil pour Robin: <3
