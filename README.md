@@ -17,7 +17,10 @@ git clone https://github.com/openai/gym.git
 cd gym
 pip install -e '.[all]'
 pip install -e '.[atari]'
-```
 
+# Install tensorflow (assuming you have Anaconda installed)
+conda install tensorflow
+# For GPU version, check https://www.tensorflow.org/install/install_linux
+```
 
 Mot gentil pour Robin: <3
