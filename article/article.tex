@@ -1,10 +1,13 @@
 \documentclass[letterpaper]{article}
 \usepackage{natbib,alifexi}
+\usepackage{color}
 
-\title{TODO title}
-\author{Cédric Simar, Antoine Passemiers, Stanislas Gueniffey \and Robin Petit \\
+\newcommand\todo[1]{\textcolor{red}{TODO: #1}}
+
+\title{Human-level control through deep reinforcement learning}
+\author{C\'{e}dric Simar, Antoine Passemiers, Stanislas Gueniffey \and Robin Petit \\
 \mbox{}\\
-Université Libre de Bruxelles \\
+Universit\'{e} Libre de Bruxelles \\
 apassemi@ulb.ac.be}
 
 
@@ -12,28 +15,40 @@ apassemi@ulb.ac.be}
 \maketitle
 
 \begin{abstract}
-  TODO
+
+  Reinforcement learning is a subarea of machine learning inspired by neuroscience, where learners have to select actions with
+  regards to the environement state and receive a reward accordingly. Each agent's objective is to maximize its cumulative reward across its whole lifetime,
+  subdivided into episodes. In the traditional framework of reinforcement learning and more specifically in Q-learning,
+  researchers usually deal with a small discrete space to represent the values of Q. This is no longer sufficient if one desires to describe the environment state
+  as an image of raw pixels. In consequence, we introduce deep Q-learning methods, which have been found to be really effective in mapping raw pixels
+  to abstract high-level features. In deep Q-learning, the estimation of Q-values for a given action are produced using deep learning neural networks,
+  which consist in stacks of many neural layers. These techniques have revealed themselves to be able to beat human experts at playing Atari games 
+  by learning only from visual features. Despite the current progress, learning to take complex decisions on the basis of high-dimensional visual data remains on
+  ongoing challenge.
+
 \end{abstract}
 
 \section{Introduction}
 
-TODO
+  \todo{pour Robin}
 
 \section{Methods}
 
-TODO \citep{Mnih2015}
+  \todo{pour Robin} \citep{Mnih2015}
 
 \section{Results}
 
-TODO
+  \todo{Plots avec les erreurs d'apprentissage (pas de cross-val)}
+
+  \todo{Magnifique plot T-SNE avec des couleurs et des gifs et des trucs qui font beep et qui font boop} \citep{wattenberg2016how}
 
 \section{Discussion}
 
-TODO
+  \todo{Amélioration: Double dueling DQN} \citep{DBLP:journals/corr/WangFL15}
 
 \section{Acknowledgements}
 
-TODO
+  \todo{Remercier Lenaerts, Nowe, Google, OpenAI, Markov}
 
 \footnotesize
 \bibliographystyle{apalike}
