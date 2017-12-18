@@ -1,6 +1,8 @@
 \documentclass[letterpaper]{article}
 \usepackage{natbib,alifexi}
 \usepackage{color}
+\usepackage{amsmath}
+\usepackage{amssymb}
 
 \newcommand\todo[1]{\textcolor{red}{TODO: #1}}
 
@@ -22,7 +24,7 @@ apassemi@ulb.ac.be}
   researchers usually deal with a small discrete space to represent the values of Q. This is no longer sufficient if one desires to describe the environment state
   as an image of raw pixels. In consequence, we introduce deep Q-learning methods, which have been found to be really effective in mapping raw pixels
   to abstract high-level features. In deep Q-learning, the estimation of Q-values for a given action are produced using deep neural networks,
-  which consist inoof many neural layers stacked on top of each other. 
+  which consist of many neural layers stacked on top of each other. 
   These techniques have revealed themselves to be able to beat human experts at playing Atari games 
   by learning only from visual features. Despite the current progress, learning to take complex decisions on the basis of high-dimensional visual data remains on
   ongoing challenge.
@@ -31,11 +33,32 @@ apassemi@ulb.ac.be}
 
 \section{Introduction}
 
-  \todo{pour Robin}
+We designed the agent in such a way that it selects actions according to its beliefs about future rewards, and its only objective is to maximize its total
+cumulative reward. More formally, this cumulative calculation starts from present time $t$ and is computed as follows:
+\[
+  Q^{*}(s, a) = \max_{\pi} \mathop{\mathbb{E}}[ r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} + ... | s_t = s, a_t = a, \pi]
+\]
+where $\pi = P(a | s)$ is a behavior policy, $t$ is the current step, $r_t$ is the reward for step $t$, $a_t$ is the action selected at time $t$, 
+and $\gamma$ is the discount factor. Thus, we can described the Q-value as the present value of all future rewards at current step $t$,
+with respect to the environment state and the action selected at $t$.
+
+Because of the very high dimensionality of input visual features, it is not reasonable to consider using a table for storing all Q-values.
+Instead, one can design a learnable function that maps pixel values to a single row of this table, thus a vector of Q-values whose length is the size
+of the action space. For that purpose we used a Deep Q-Network (DQN) to approximate this function, as in the original DQN article \citep{Mnih2015}.
+A DQN is a particular instance of Convolutional Neural Networks (CNN) and is composed of a stack of neural layers. One characteristic of CNNs is the
+presence of convolutional filters that maps pixel luminance to more abstract features. Each filter (or kernel) is locally connected to its output, which
+allows the convolutional layer to capture the local information of the pixels, contrary to what dense (fully-connected) layers do. This procedure is greatly
+inspired by the notion of receptive field introduced by Hubel and Wiesel \citep{Hubel1962}.
+Let $Q(s, a; \theta_i)$ be the Q-value approximation function represented by the neural network, parameterized by its weights $\theta$ at time step $i$.
+
+Since we are handling visual features, we used screen frames as environment state representations. Each frame is a (210 x 160) color image sampled at
+a frequency of 60 Hz.
+
+  \todo{Antoine suite}
 
 \section{Methods}
 
-  \todo{pour Robin} \citep{Mnih2015}
+  \todo{pour Robin}
 
   \todo{Citer ALE} \citep{bellemare13arcade}
 
