@@ -2,7 +2,6 @@
 # dqn.py
 # author : Robin Petit, Stanislas Gueniffey, Cedric Simar, Antoine Passemiers
 
-from parameters import Parameters
 from environment import Environment
 from dqn import DQN
 

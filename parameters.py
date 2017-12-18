@@ -4,49 +4,32 @@ from games import Games
 class Parameters:
 
     # environment settings
-    games = Games()
-    game = games.SPACE_INVADERS
-    action_space = games.get_action_space(game)
-    display = True
-    FPS = 30
+    GAMES = Games()
+    GAME = games.SPACE_INVADERS
+    ACTION_SPACE = games.get_action_space(game)
+    DISPLAY = True
 
-    """
-    [Article] Following previous approaches to playing Atari 2600 games, we also use a simple
-    frame-skipping technique. More precisely, the agent sees and selects actions on
-    every kth frame instead of every frame, and its last action is repeated on skipped
-    frames. Because running the emulator forward for one step requires much less
-    computation than having the agent select an action, this technique allows the agent
-    to play roughly k times more games without significantly increasing the runtime.
-    We use k = 4 for all games
-    """
-    frame_skipping = 4
+    @staticmethod
+    def add_attr(name, value):
+        """ Statically add a parameter as an attribute
 
+        :param name: str
+            Name of the new attribute
+        :param value: object
+            Value of the corresponding hyper-parameter
+        """
+        name = name.upper()
+        setattr(Parameters, name, value)
 
-    # preprocessing
-    image_width = 84
-    image_height = 84
+    @staticmethod
+    def load(filepath):
+        """ Statically loads the hyper-parameters from a json file
 
-
-    # Q-learning settings
-    """
-    [Article] As the scale of scores varies greatly from game to game, we clipped all posi-
-    tive rewards at 1 and all negative rewards at 21, leaving 0 rewards unchanged.
-    Clipping the rewards in this manner limits the scale of the error derivatives and
-    makes it easier to use the same learning rate across multiple games. At the same time,
-    it could affect the performance of our agent since it cannot differentiate between
-    rewards of different magnitude.
-    """
-    positive_reward = 1
-    negative_reward = -1
-    no_reward = 0
-
-    """
-    [Article] The function w from algorithm ϕ described below applies this preprocess-
-    ing to the m most recent frames and stacks them to produce the input to the
-    Q-function, in which m = 4, although the algorithm is robust to different values of
-    m (for example, 3 or 5).
-    """
-    m_recent_frames = 4
-
-    MAX_STEPS = 5000
-
+        :param filepath: str
+            Path to the json parameter file
+        """
+        with open(filepath, "r") as f:
+            data = json.load(f)
+            for key in data.keys():
+                if type(data[key]) == dict:
+                    Parameters.add_attr(key, data[key]["value"])

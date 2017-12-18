@@ -21,7 +21,7 @@ def screen_resize(image):
     Using cv2 and INTER_AREA for speed
     Original size: 210x160x3
     """
-    return(cv2.resize(image, (Parameters.image_width, Parameters.image_height), interpolation= cv2.INTER_AREA))
+    return(cv2.resize(image, (Parameters.IMAGE_WIDTH, Parameters.IMAGE_HEIGHT), interpolation= cv2.INTER_AREA))
 
 
 def remove_flickering(previous_image, image):

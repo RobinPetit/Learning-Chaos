@@ -25,14 +25,14 @@ class DQN:
         produced by the preprocessing map ϕ
         """
         # reshape input to 4d tensor [batch, height, width, channels]
-        input = tf.reshape(self.image, [-1, Parameters.image_height, Parameters.image_width, Parameters.m_recent_frames])
+        input = tf.reshape(self.image, [-1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.M_RECENT_FRAMES])
 
         # convolutional layer 1
         """
         [Article] The first hidden layer convolves 32 filters of 8 x 8 with stride 4 with the
         input image and applies a rectifier nonlinearity
         """
-        W_conv1 = self.weight_variable([8, 8, Parameters.m_recent_frames, 32])
+        W_conv1 = self.weight_variable([8, 8, Parameters.M_RECENT_FRAMES, 32])
         b_conv1 = self.bias_variable([32])
         conv1 = tf.nn.conv2d(input, W_conv1, strides=[1, 4, 4, 1], padding='VALID') # would 'SAME' also work ?
         h_conv1 = tf.nn.relu(conv1 + b_conv1)
@@ -72,13 +72,13 @@ class DQN:
         h_fc1 = tf.nn.relu(fc1 + b_fc1)
 
         # fully connected layer 2 (output layer)
-        W_fc2 = self.weight_variable([512, Parameters.action_space])
-        b_fc2 = self.bias_variable([Parameters.action_space])
+        W_fc2 = self.weight_variable([512, Parameters.ACTION_SPACE])
+        b_fc2 = self.bias_variable([Parameters.ACTION_SPACE])
         fc2 = tf.matmul(h_fc1, W_fc2)
 
         net_output = fc2 + b_fc2
 
-        # network output is of shape (1, Parameters.action_space)
+        # network output is of shape (1, Parameters.ACTION_SPACE)
         
         return(net_output)
     

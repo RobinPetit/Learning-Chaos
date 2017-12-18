@@ -1,0 +1,103 @@
+{
+    "desc": "List of hyperparameters retrieved from the original article",
+    "frame_skipping": {
+        "desc": "Following previous approaches to playing Atari 2600 games, we also use a simple frame-skipping technique. More precisely, the agent sees and selects actions on every kth frame instead of every frame, and its last action is repeated on skipped frames. Because running the emulator forward for one step requires much less computation than having the agent select an action, this technique allows the agent to play roughly k times more games without significantly increasing the runtime. We use k = 4 for all games.",
+        "value": 4
+    },
+    "image_width": {
+        "desc": "Image width",
+        "value": 84
+    },
+    "image_height": {
+        "desc": "Image height",
+        "value": 84
+    },
+    "m_recent_frames": {
+        "desc": "The function w from algorithm ϕ described below applies this preprocessing to the m most recent frames and stacks them to produce the input to the Q-function, in which m = 4, although the algorithm is robust to different values of m (for example, 3 or 5).",
+        "value": 4
+    },
+    "positive_reward": {
+        "desc": "As the scale of scores varies greatly from game to game, we clipped all positive rewards at 1 and all negative rewards at 21, leaving 0 rewards unchanged. Clipping the rewards in this manner limits the scale of the error derivatives and makes it easier to use the same learning rate across multiple games. At the same time, it could affect the performance of our agent since it cannot differentiate between rewards of different magnitude.",
+        "value": 1
+    },
+    "no_reward": {
+        "desc": "No-reward label",
+        "value": 0
+    },
+    "negative_reward": {
+        "desc": "Negative-reward label",
+        "value": -1
+    },
+    "max_steps": {
+        "desc": "Number of steps before to interrupt the learning procedure",
+        "value": 10000000  
+    },
+    "fps": {
+        "desc": "Number of frames per second / frame sampling frequency",
+        "value": 30
+    },
+    "minibatch_size": {
+        "desc": "Number of training cases over which each stochastic gradient descent (SGD) update is computed",
+        "value": 32
+    },
+    "replay_memory_size": {
+        "desc": "SGD updates are sampled from this number of most recent frames",
+        "value": 1000000
+    },
+    "agent_history_length": {
+        "desc": "The number of most recent frames experienced by the agent that are given as input to the Q network",
+        "value": 4
+    },
+    "target_network_update_frequency": {
+        "desc": "The frequency (measured in the number of parameter updates) with which the target network is updated (this corresponds to the parameter C from Algorithm 1)",
+        "value": 10000
+    },
+    "discount_factor": {
+        "desc": "Discount factor gamma used in the Q-learning update",
+        "value": 0.99
+    },
+    "action_repeat": {
+        "desc": "Repeat each action selected by the agent this many times. Using a value of 4 results in the agent seeing only every 4th input frame",
+        "value": 4
+    },
+    "update_frequency": {
+        "desc": "The number of actions selected by the agent between successive SGD updates. Using a value of 4 results in the agent selecting 4 actions between each pair of successive updates",
+        "value": 4
+    },
+    "learning_rate": {
+        "desc": "The learning rate used by RMSProp",
+        "value": 0.00025
+    },
+    "gradient_momentum": {
+        "desc": "Gradient momentum used by RMSProp",
+        "value": 0.95
+    },
+    "squared_gradient_momentum": {
+        "desc": "Squared gradient (denominator) momentum used by RMSProp",
+        "value": 0.95
+    },
+    "min_squared_gradient": {
+        "desc": "Constant added to the squared gradient in the denominator of the RMSProp update",
+        "value": 0.01
+    },
+    "initial_exploration": {
+        "desc": "Initial value of epsilon in epsilon-greedy exploration",
+        "value": 1
+    },
+    "final_exploration": {
+        "desc": "Final value of epsilon in epsilon-greedy exploration",
+        "value": 0.1
+    },
+    "final_exploration_frame": {
+        "desc": "The number of frames over which the initial value of epsilon is linearly annealed to its final value",
+        "value": 1000000
+    },
+    "replay_start_size": {
+        "desc": "A uniform random policy is run for this number of frames before learning starts and the resulting experience is used to populate the replay memory",
+        "value": 50000
+    },
+    "no_op_max": {
+        "desc": "Maximum number of do-nothing actions to be performed by the agent at the start of an episode",
+        "value": 30
+    },
+}

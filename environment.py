@@ -13,7 +13,7 @@ class Environment:
 
     def __init__(self):
 
-        self.environment = gym.envs.make(Parameters.game)
+        self.environment = gym.envs.make(Parameters.GAME)
         self.new_game()
 
         # let's have a look at the first cnn input
@@ -44,7 +44,7 @@ class Environment:
         """ initialize the history by pushing the first screen 4 (m_recent_frames) times """
 
         self.history = Frames_History()
-        for _ in range(Parameters.m_recent_frames):
+        for _ in range(Parameters.M_RECENT_FRAMES):
             self.history.add_frame(self.screen)
 
     
@@ -75,17 +75,17 @@ class Environment:
     def act(self, action):
 
         """
-        Take the action a certain number of times (Parameters.frame_skipping)
+        Take the action a certain number of times (Parameters.FRAME_SKIPPING)
         as described in the article
         Return the environment state after taking the action x times
         """
 
         lives_before_action = self.lives
-        cumulated_reward = Parameters.no_reward
+        cumulated_reward = Parameters.NO_REWARD
 
         # frame skipping (see Parameters for more information)
         skipped = 0 # break is evil
-        while(skipped < Parameters.frame_skipping and not self.terminal):
+        while(skipped < Parameters.FRAME_SKIPPING and not self.terminal):
             
             self.take_action(action)
             cumulated_reward += self.reward
@@ -98,7 +98,7 @@ class Environment:
             mark the end of an episode during training.
             """
             if self.lives < lives_before_action:
-                cumulated_reward -= Parameters.negative_reward
+                cumulated_reward -= Parameters.NEGATIVE_REWARD
                 self.terminal = True
             
             skipped += 1
@@ -128,6 +128,6 @@ class Environment:
         """
         Display the game on screen only if the display parameter is True
         """
-        if(Parameters.display):
+        if(Parameters.DISPLAY):
             self.environment.render()
 
