@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# utils.py: Hyper-parameters and stuff
+# utils.py: Image preprocessing
 # author : Robin Petit, Stanislas Gueniffey, Cedric Simar, Antoine Passemiers
 
 import numpy as np

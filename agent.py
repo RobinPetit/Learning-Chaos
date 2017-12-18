@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# dqn.py
+# agent.py
 # author : Robin Petit, Stanislas Gueniffey, Cedric Simar, Antoine Passemiers
 
 from environment import Environment
@@ -20,5 +20,3 @@ class Agent:
         # The agent uses its experience and expertise acquired
         # through deep learning to make intelligent actions
         return np.random.randint(0, self.n_actions, size=1)[0]
-
-Agent()

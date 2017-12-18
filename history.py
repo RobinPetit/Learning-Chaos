@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# history.py  : Experience replay
+# author : Robin Petit, Stanislas Gueniffey, Cedric Simar, Antoine Passemiers
 
 """
 [Article] The function w from algorithm ϕ described below applies this preprocess-

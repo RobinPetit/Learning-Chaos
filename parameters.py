@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# parameters.py : Load parameters from json config file
+# author : Robin Petit, Stanislas Gueniffey, Cedric Simar, Antoine Passemiers
 
 from games import Games
 
@@ -11,7 +14,9 @@ class Parameters:
 
     @staticmethod
     def add_attr(name, value):
-        """ Statically add a parameter as an attribute
+        """ Statically adds a parameter as an attribute
+        to class Parameters. All new Parameters atributes
+        are in capital letters.
 
         :param name: str
             Name of the new attribute

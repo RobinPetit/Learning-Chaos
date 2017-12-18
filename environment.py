@@ -1,10 +1,14 @@
+# -*- coding: utf-8 -*-
+# environment.py 
+# author : Robin Petit, Stanislas Gueniffey, Cedric Simar, Antoine Passemiers
 
-import gym
-import numpy as np
-import cv2
 from history import Frames_History
 from parameters import Parameters
 import utils
+
+import cv2
+import gym
+import numpy as np
 import matplotlib.pyplot as plt
 
 # ϕ
@@ -32,7 +36,7 @@ class Environment:
         self.take_action(first_action)
         self.render()
         self.reward = 0
-        self.terminal = False # True?
+        self.terminal = False # True? -> Parameter ?
 
         self.initialize_screens_history()
 
