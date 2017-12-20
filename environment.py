@@ -102,7 +102,7 @@ class Environment:
             mark the end of an episode during training.
             """
             if self.lives < lives_before_action:
-                cumulated_reward -= Parameters.NEGATIVE_REWARD
+                cumulated_reward += Parameters.NEGATIVE_REWARD
                 self.terminal = True
             
             skipped += 1
