@@ -79,6 +79,12 @@ class DQN:
         net_output = fc2 + b_fc2
 
         # network output is of shape (1, Parameters.ACTION_SPACE)
+        """
+        [Article] We use an architecture in which there is a separate output unit 
+        for each possible action [ = one-hot encoding ], and only the state representation 
+        is an input to the neural network. The outputs correspond to the predicted Q-values of 
+        the individual actions for the input state.
+        """
         
         return(net_output)
     
