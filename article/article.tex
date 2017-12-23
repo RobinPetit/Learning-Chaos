@@ -27,7 +27,8 @@ apassemi@ulb.ac.be}
   which consist of many neural layers stacked on top of each other. 
   These techniques have revealed themselves to be able to beat human experts at playing Atari games 
   by learning only from visual features. Despite the current progress, learning to take complex decisions on the basis of high-dimensional visual data remains on
-  ongoing challenge.
+  ongoing challenge. In particular, because of the instability of neural networks, we also explored state-of-the-art dueling architectures to enhance performance
+  by separating the high-level representation of states and action values (rewards).
 
 \end{abstract}
 
@@ -52,9 +53,15 @@ inspired by the notion of receptive field introduced by Hubel and Wiesel \citep{
 Let $Q(s, a; \theta_i)$ be the Q-value approximation function represented by the neural network, parameterized by its weights $\theta$ at time step $i$.
 
 Since we are handling visual features, we used screen frames as environment state representations. Each frame is a (210 x 160) color image sampled at
-a frequency of 60 Hz.
+a frequency of 60 Hz. We denote the environment state at current step $t$ by $s_t$. The agent gathers experience by incorporating new experience samples
+to its history. An experience is a tuple $e_t = (s_t, a_t, r_t, s_{t+1})$ appended to the experience history immediately after being generated.
+To prevent the agent from forgetting the history and increase the bias towards most recent experience samples, we have recourse on the experience
+replay algorithm. One can straightforwardly implement it as a uniform sampling algorithm that returns random experience samples at each step.
+We compared this technique to a more efficient approach called prioritized experience replay \citep{DBLP:journals/corr/SchaulQAS15}.
 
   \todo{Antoine suite}
+
+It has been shown that DQN has an ability to learn by acquiring experience generated from policies other than its own.
 
 \section{Methods}
 
