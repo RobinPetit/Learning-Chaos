@@ -43,7 +43,7 @@ cumulative reward. More formally, this cumulative calculation starts from presen
   Q^{*}(s, a) = \max_{\pi} \E\left[ \sum_{k \geq 0}r_{t+k}\gamma^k | s_t = s, a_t = a, \pi\right].
 \]
 where $\pi = P(a | s)$ is a behavior policy, $t$ is the current step, $r_t$ is the reward for step $t$, $a_t$ is the action selected at time $t$,
-and $\gamma$ is the discount factor. Thus, we can described the Q-value as the present value of all future rewards at current step $t$,
+and $\gamma$ is the discount factor. Thus, we can describe the Q-value as the present value of all future rewards at current step $t$,
 with respect to the environment state and the action selected at $t$.
 
 Because of the very high dimensionality of input visual features, it is not reasonable to consider using a table for storing all Q-values.
