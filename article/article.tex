@@ -4,14 +4,17 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 
+\usepackage{hyperref}
+
 \newcommand\todo[1]{\textcolor{red}{TODO: #1}}
+
+\newcommand{\E}{\mathbb E}
 
 \title{Human-level control through deep reinforcement learning}
 \author{C\'{e}dric Simar, Antoine Passemiers, Stanislas Gueniffey \and Robin Petit \\
 \mbox{}\\
 Universit\'{e} Libre de Bruxelles \\
 apassemi@ulb.ac.be}
-
 
 \begin{document}
 \maketitle
@@ -24,8 +27,8 @@ apassemi@ulb.ac.be}
   researchers usually deal with a small discrete space to represent the values of Q. This is no longer sufficient if one desires to describe the environment state
   as an image of raw pixels. In consequence, we introduce deep Q-learning methods, which have been found to be really effective in mapping raw pixels
   to abstract high-level features. In deep Q-learning, the estimation of Q-values for a given action are produced using deep neural networks,
-  which consist of many neural layers stacked on top of each other. 
-  These techniques have revealed themselves to be able to beat human experts at playing Atari games 
+  which consist of many neural layers stacked on top of each other.
+  These techniques have revealed themselves to be able to beat human experts at playing Atari games
   by learning only from visual features. Despite the current progress, learning to take complex decisions on the basis of high-dimensional visual data remains on
   ongoing challenge. In particular, because of the instability of neural networks, we also explored state-of-the-art dueling architectures to enhance performance
   by separating the high-level representation of states and action values (rewards).
@@ -37,9 +40,9 @@ apassemi@ulb.ac.be}
 We designed the agent in such a way that it selects actions according to its beliefs about future rewards, and its only objective is to maximize its total
 cumulative reward. More formally, this cumulative calculation starts from present time $t$ and is computed as follows:
 \[
-  Q^{*}(s, a) = \max_{\pi} \mathop{\mathbb{E}}[ r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} + ... | s_t = s, a_t = a, \pi]
+  Q^{*}(s, a) = \max_{\pi} \E\left[ \sum_{k \geq 0}r_{t+k}\gamma^k | s_t = s, a_t = a, \pi\right].
 \]
-where $\pi = P(a | s)$ is a behavior policy, $t$ is the current step, $r_t$ is the reward for step $t$, $a_t$ is the action selected at time $t$, 
+where $\pi = P(a | s)$ is a behavior policy, $t$ is the current step, $r_t$ is the reward for step $t$, $a_t$ is the action selected at time $t$,
 and $\gamma$ is the discount factor. Thus, we can described the Q-value as the present value of all future rewards at current step $t$,
 with respect to the environment state and the action selected at $t$.
 
@@ -86,6 +89,5 @@ It has been shown that DQN has an ability to learn by acquiring experience gener
 \footnotesize
 \bibliographystyle{apalike}
 \bibliography{article}
-
 
 \end{document}
