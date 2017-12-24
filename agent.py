@@ -39,14 +39,14 @@ class Agent:
         (s, a, r, s') ~ U(D), drawn at random from the pool of stored samples.
         """
 
-        if(self.memory.get_usage() > Parameters.agent_history_length):
+        if(self.memory.get_usage() > Parameters.AGENT_HISTORY_LENGTH):
             
             state_t, action, reward, state_t_plus_1, terminal = self.memory.bring_back_memories()
 
             q_t_plus_1 = self.tf_session.run(self.target_dqn.q_values, {self.target_dqn_input: state_t_plus_1})
             max_q_t_plus_1 = np.max(q_t_plus_1, axis=1)
 
-            target_q_t = (1. - terminal) * Parameters.discount_factor * max_q_t_plus_1 + reward
+            target_q_t = (1. - terminal) * Parameters.DISCOUNT_FACTOR * max_q_t_plus_1 + reward
 
             _, q_t, loss = self.tf_session.run([self.dqn.optimize, self.dqn.q_values, self.dqn.error],
             {
@@ -64,14 +64,14 @@ class Agent:
         self.memory.add(screen, action, reward, terminal)
 
         # if we started learning
-        if(self.step > Parameters.replay_start_size):
+        if(self.step > Parameters.REPLAY_START_SIZE):
 
             # If we are not between successive SGD updates
-            if(not(self.step % Parameters.update_frequency)):
+            if(not(self.step % Parameters.UPDATE_FREQUENCY)):
                 self.batch_q_learning()
             
             # If we are not between successive target network update
-            if(not(self.step % Parameters.target_network_update_frequency)):
+            if(not(self.step % Parameters.TARGET_NETWORK_UPDATE_FREQUENCY)):
                 self.update_target_dqn()
             
 
@@ -83,7 +83,9 @@ class Agent:
         """
 
         # compute epsilon at step t
-        eps = Parameters.final_exploration + max(0., (Parameters.initial_exploration - Parameters.final_exploration) * (Parameters.final_exploration_frame - max(0., self.step - Parameters.replay_start_size)) / Parameters.final_exploration_frame)
+        dt_final = Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION
+        dt = self.step - Parameters.REPLAY_START_SIZE
+        eps = Parameters.FINAL_EXPLORATION + max(0., dt * (Parameters.FINAL_EXPLORATION_FRAME - max(0., dt)) / Parameters.FINAL_EXPLORATION_FRAME)
 
         if random.random() < eps:
             # take a random action

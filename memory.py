@@ -6,19 +6,19 @@ class Memory:
 
     def __init__(self):
 
-        self.memory_size = Parameters.replay_memory_size
+        self.memory_size = Parameters.REPLAY_MEMORY_SIZE
         self.current_memory_index = 0
         self.memory_usage = 0
 
         self.actions = np.empty(self.memory_size, dtype=np.uint8)
         self.rewards = np.empty(self.memory_size, dtype=np.integer)
-        self.screens = np.empty(self.memory_size, Parameters.image_height, Parameters.image_width, dtype=np.float16)
+        self.screens = np.empty(self.memory_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, dtype=np.float16)
         self.terminals = np.empty(self.memory_size, dtype=np.bool)
 
-        self.minibatch_size = Parameters.minibatch_size
+        self.minibatch_size = Parameters.MINIBATCH_SIZE
 
-        self.state_t = np.empty((self.minibatch_size, Parameters.agent_history_length, Parameters.image_height, Parameters.image_width), dtype=np.float16)
-        self.state_t_plus_1 = np.empty((self.minibatch_size, Parameters.agent_history_length, Parameters.image_height, Parameters.image_width), dtype=np.float16)
+        self.state_t = np.empty((self.minibatch_size, Parameters.AGENT_HISTORY_LENGTH, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH), dtype=np.float16)
+        self.state_t_plus_1 = np.empty((self.minibatch_size, Parameters.AGENT_HISTORY_LENGTH, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH), dtype=np.float16)
 
 
     def add(self, screen, action, reward, terminal):
@@ -42,11 +42,11 @@ class Memory:
 
             state_index = state_index % self.memory_usage
 
-            if(state_index >= Parameters.agent_history_length - 1):
-                state = self.screens[(state_index - Parameters.agent_history_length) + 1 : state_index + 1, ...]
+            if(state_index >= Parameters.AGENT_HISTORY_LENGTH - 1):
+                state = self.screens[(state_index - Parameters.AGENT_HISTORY_LENGTH) + 1 : state_index + 1, ...]
             else:
                 # negative indices don't work well with slices in numpy..
-                state = self.screens[np.array([(state_index-i) % self.memory_usage for i in reversed(range(Parameters.agent_history_length))]), ...]
+                state = self.screens[np.array([(state_index-i) % self.memory_usage for i in reversed(range(Parameters.AGENT_HISTORY_LENGTH))]), ...]
 
         return(state)
         
@@ -65,13 +65,13 @@ class Memory:
         This method selects and returns [minibatch_size] memories randomly from the memory
         Memories that contain either a terminal or the self.current_memory_index are not selected
         """
-        assert(self.memory_usage > Parameters.agent_history_length)
+        assert(self.memory_usage > Parameters.AGENT_HISTORY_LENGTH)
             
         selected_memories = []
 
         while(len(selected_memories) < self.minibatch_size):
 
-            memory = np.random.randint(Parameters.agent_history_length, self.memory_usage)
+            memory = np.random.randint(Parameters.AGENT_HISTORY_LENGTH, self.memory_usage)
             
             if(not self.includes_terminal(memory) and not self.includes_current_memory_index(memory)):
                 self.state_t[len(selected_memories), ...] = self.get_state(memory-1)
@@ -85,11 +85,11 @@ class Memory:
         
 
     def includes_terminal(self, index):
-        return(np.any(self.terminals[(index - Parameters.agent_history_length):index]))
+        return(np.any(self.terminals[(index - Parameters.AGENT_HISTORY_LENGTH):index]))
 
 
     def includes_current_memory_index(self, index):
-        return((index >= self.current_memory_index) and (index - Parameters.agent_history_length < self.current_memory_index))
+        return((index >= self.current_memory_index) and (index - Parameters.AGENT_HISTORY_LENGTH < self.current_memory_index))
 
     
     def get_usage(self):

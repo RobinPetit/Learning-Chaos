@@ -129,9 +129,9 @@ class DQN:
     @define_scope
     def optimize(self):
         
-        self.optimizer = tf.train.RMSPropOptimizer( learning_rate = Parameters.learning_rate, 
-                                                    momentum = Parameters.gradient_momentum,
-                                                    epsilon = Parameters.min_squared_gradient )
+        self.optimizer = tf.train.RMSPropOptimizer( learning_rate = Parameters.LEARNING_RATE, 
+                                                    momentum = Parameters.GRADIENT_MOMENTUM,
+                                                    epsilon = Parameters.MIN_SQUARED_GRADIENT )
         
         return(optimizer.minimize(self.error))
 
