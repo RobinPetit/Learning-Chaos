@@ -2,6 +2,7 @@
 # agent.py
 # author : Robin Petit, Stanislas Gueniffey, Cedric Simar, Antoine Passemiers
 
+from utils import reward_clipper
 from environment import Environment
 from memory import Memory
 from parameters import Parameters
@@ -57,20 +58,27 @@ class Agent:
 
 
     def observe(self, screen, action, reward, terminal):
+        """
+        [Article] The agent observes an image from the emulator, 
+        which is a vector of pixel values representing the current screen. 
+        In addition it receives a reward representing the change in game score. 
+
+        Updates the environment's history and agent's memory and performs an SGD update
+        and/or updates the Target DQN 
+        """
         
         # update agent's memory and environment's history
-
-        # add screen to history (TODO double check the best way to do it)
-        self.memory.add(screen, action, reward, terminal)
+        self.environment.add_current_screen_to_history()
+        self.memory.add(screen, action, reward_clipper(reward), terminal)
 
         # if we started learning
         if(self.step > Parameters.REPLAY_START_SIZE):
 
-            # If we are not between successive SGD updates
+            # Perform SGD updates at frequency [Parameters.UPDATE_FREQUENCY]
             if(not(self.step % Parameters.UPDATE_FREQUENCY)):
                 self.batch_q_learning()
             
-            # If we are not between successive target network update
+            # Update Target DQN at frequency [Parameters.TARGET_NETWORK_UPDATE_FREQUENCY]
             if(not(self.step % Parameters.TARGET_NETWORK_UPDATE_FREQUENCY)):
                 self.update_target_dqn()
             

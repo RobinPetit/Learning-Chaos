@@ -33,3 +33,15 @@ def remove_flickering(previous_image, image):
     limited number of sprites Atari 2600 can display at once.
     """
     return(np.asarray([previous_image, image]).max(axis=0))
+
+
+def reward_clipper(reward):
+    """
+    [Article] As the scale of scores varies greatly from game to game, we clipped 
+    all positive rewards at 1 and all negative rewards at 21, leaving 0 rewards unchanged. 
+    Clipping the rewards in this manner limits the scale of the error derivatives and 
+    makes it easier to use the same learning rate across multiple games. 
+    At the same time, it could affect the performance of our agent since it cannot 
+    differentiate between rewards of different magnitude.
+    """
+    return(max(Parameters.NEGATIVE_REWARD, min(Parameters.POSITIVE_REWARD, reward)))

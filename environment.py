@@ -94,8 +94,6 @@ class Environment:
             self.take_action(action)
             cumulated_reward += self.reward
 
-            ## TODO ?? Should we update screen history or not here ?? ##
-
             """
             [Article] For games where there is a life counter, the Atari
             2600 emulator also sends the number of lives left in the game, which is then used to
