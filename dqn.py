@@ -6,26 +6,39 @@ from parameters import Parameters
 
 class DQN:
 
-    def __init__(self, image):
+    def __init__(self, state):
 
-        # receiving image placeholder
-        self.image = image
+        # receiving state placeholder
+        self.state = state
+
+        # weights and biases dictionary
+        self.learning_parameters = {}
+        self.layers : {}
 
         # initialize tensorflow graph
-        self.prediction
-        self.train
+        self.q_values
+        self.optimize
         self.error
+
+        # Initialize input placeholder to assign values to weights and biases
+        # Used when we transfert them from the training network to the target network
+        # or when we load DQN parameters previously saved in a file
+        self.l_param_input = {}
+        self.assign_operator = {}
+        for variable_name in self.learning_parameters.keys():
+            self.l_param_input[variable_name] = tf.placeholder(tf.float32, self.learning_parameters[variable_name].get_shape().as_list(), name=variable_name)
+            self.assign_operator[variable_name] = self.learning_parameters[variable_name].assign(self.l_param_input[variable_name])
 
 
     @define_scope
-    def prediction(self):
+    def q_values(self):
         
         """
-        [Article] The input to the neural network consists of an 84 x 84 x 4 image 
+        [Article] The input to the neural network (the state) consists of an 84 x 84 x 4 image 
         produced by the preprocessing map ϕ
         """
         # reshape input to 4d tensor [batch, height, width, channels]
-        input = tf.reshape(self.image, [-1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.M_RECENT_FRAMES])
+        input = tf.reshape(self.state, [-1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.M_RECENT_FRAMES])
 
         # convolutional layer 1
         """
@@ -62,7 +75,7 @@ class DQN:
         h_conv3 = tf.nn.relu(conv3 + b_conv3)
 
         # output of conv 3 is of shape [-1 x 7 x 7 x 64]
-       
+        
         h_conv3_flat = tf.reshape(h_conv3, [-1, 7 * 7 * 64])
 
         # fully connected layer 1
@@ -76,8 +89,6 @@ class DQN:
         b_fc2 = self.bias_variable([Parameters.ACTION_SPACE])
         fc2 = tf.matmul(h_fc1, W_fc2)
 
-        net_output = fc2 + b_fc2
-
         # network output is of shape (1, Parameters.ACTION_SPACE)
         """
         [Article] We use an architecture in which there is a separate output unit 
@@ -85,35 +96,134 @@ class DQN:
         is an input to the neural network. The outputs correspond to the predicted Q-values of 
         the individual actions for the input state.
         """
+        predicted_q_values = fc2 + b_fc2
         
-        return(net_output)
+
+        # saving learning parameters and layers output to access them directly if needed
+
+        self.learning_parameters["W_conv1"], self.learning_parameters["b_conv1"] = W_conv1, b_conv1
+        self.layers["conv1"], self.layers["h_conv1"] = conv1, h_conv1
+
+        self.learning_parameters["W_conv2"], self.learning_parameters["b_conv2"] = W_conv2, b_conv2
+        self.layers["conv2"], self.layers["h_conv2"] = conv2, h_conv2
+
+        self.learning_parameters["W_conv3"], self.learning_parameters["b_conv3"] = W_conv3, b_conv3
+        self.layers["conv3"], self.layers["h_conv3"], self.layers["h_conv3_flat"] = conv3, h_conv3, h_conv3_flat
+        
+        self.learning_parameters["W_fc1"], self.learning_parameters["b_fc1"] = W_fc1, b_fc1
+        self.layers["fc1"], self.layers["h_fc1"] = fc1, h_fc1
+        
+        self.learning_parameters["W_fc2"], self.learning_parameters["b_fc2"] = W_fc2, b_fc2
+        self.layers["fc2"], self.layers["h_fc2"] = conv2, h_conv2
+
+        return(predicted_q_values)
     
 
     @define_scope
-    def train(self):
-        print("Not available yet")
-        """ (MNIST) NOT YET UPDATED FOR THE PROJECT """
-        # cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.label, logits=self.prediction))
-        # optimizer = tf.train.AdamOptimizer(1e-4)
-        # return(optimizer.minimize(cross_entropy))
+    def smartest_action(self):
+
+        highest_q_value = tf.argmax(self.q_values, dimension = 1)
+        return(highest_q_value)
+
+
+    @define_scope
+    def optimize(self):
+        
+        self.optimizer = tf.train.RMSPropOptimizer( learning_rate = Parameters.learning_rate, 
+                                                    momentum = Parameters.gradient_momentum,
+                                                    epsilon = Parameters.min_squared_gradient )
+        
+        return(optimizer.minimize(self.error))
 
 
     @define_scope
     def error(self):
-        print("Not available yet")
-        """ (MNIST) NOT YET UPDATED FOR THE PROJECT """
-        # errors = tf.not_equal(tf.argmax(self.label, 1), tf.argmax(self.prediction, 1))
-        # return(tf.reduce_mean(tf.cast(errors, tf.float32)))
+        """
+        Return the mean (clipped) error 
+        """
+        
+        # placeholders for the target network q values and the action
+        self.target_q = tf.placeholder(tf.float32, [None], name="target_q")
+        self.action = tf.placeholder(tf.int64, [None], name="action")
+
+        # convert the action to one-hot representation in order to compute the error
+        action_one_hot = tf.one_hot(self.action, Parameters.ACTION_SPACE, on_value=1, off_value=0, name="action_one_hot")
+        
+        self.q_acted = tf.reduce_sum(self.q_values * action_one_hot, axis = 1, name="q_acted")
+        
+        self.delta = self.target_q - self.q_acted
+
+        """
+        [Article] We also found it helpful to clip the error term from the update r + gamma max_d Q(s', a', theta-)
+        to be between -1 and 1. Because the absolute value loss function |x| has a derivative of -1 
+        for all negative values of x and a derivative of 1 for all positive values of x, 
+        clipping the squared error to be between -1 and 1 corresponds to using an absolute value 
+        loss function for errors outside of the (-1,1) interval. This form of error clipping further 
+        improved the stability of the algorithm.
+
+        It is called the Huber loss and because the name is so cool, we have to implement it
+        With d = 1 (we could also try with d = 2) (d <> self.delta)
+        x =  0.5 * x^2                  if |x| <= d
+        x =  0.5 * d^2 + d * (|x| - d)  if |x| > d
+        """
+        self.clipped_error = tf.array_ops.where(tf.abs(self.delta) < 1.0, 
+                                                tf.square(self.delta) * 0.5,
+                                                tf.abs(self.delta) - 0.5)
+        
+        self.mean_error = tf.reduce_mean(self.clipped_error, name="mean_error")
+        
+        return(self.mean_error)
 
 
     def weight_variable(self, shape):
-        """ (MNIST) NOT YET UPDATED FOR THE PROJECT """
-        weight_var = tf.truncated_normal(shape, stddev=0.1)
+        """
+        Initialize weight variable randomly using a truncated normal distribution
+        of mean = 0 and standard deviation of 0.02
+        """
+        weight_var = tf.truncated_normal(shape, mean = 0, stddev=0.02)
         return(tf.Variable(weight_var))
 
 
     def bias_variable(self, shape):
-        """ (MNIST) NOT YET UPDATED FOR THE PROJECT """
-        bias_var = tf.constant(0.1, shape=shape)
+        """ 
+        Initialize bias variables of a specific shape using a constant
+        """
+        bias_var = tf.constant(0.1, shape=shape)  # 0 used in the other implementation
         return(bias_var)
+
+
+    def get_value(self, var_name):
+        """
+        Return the value of the tf variable named [var_name] if it exists, None otherwise
+        """
+        
+        if var_name in self.learning_parameters:
+
+            value = self.learning_parameters[var_name].eval()
+
+        elif var_name in self.layers:
+
+            value = self.layers[var_name].eval()
+        else:
+            print("Unknown DQN variable: " + var_name)
+            value = None
+        
+        return(value)
+    
+
+    def set_value(self, var_name, new_value):
+        """
+        Set the value of the tf variable [var_name] to [new_value]
+        """
+        if(var_name in self.assign_operator):
+            self.assign_operator[var_name].eval({self.l_param_input[var_name]: new_value})
+        else:
+            print("Thou shall only assign learning parameters!")
+
+    
+    def save_learning_parameters(self):
+        print("TODO")
+
+    def load_learning_parameters(self):
+        print("TODO")
 

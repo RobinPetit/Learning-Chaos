@@ -19,7 +19,7 @@ class Frames_History:
     def __init__(self):
             
         """ /!\ Always in Float32 otherwise cv2.resize shits itself /!\ """
-        self.frames_history = np.zeros((Parameters.M_RECENT_FRAMES, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH), dtype=np.float32)
+        self.frames_history = np.zeros((Parameters.agent_history_length, Parameters.image_height, Parameters.image_width), dtype=np.float32)
 
 
     def add_frame(self, frame):
