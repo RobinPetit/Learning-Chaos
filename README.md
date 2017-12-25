@@ -1,5 +1,17 @@
 # Dependencies
 
+## Libraries
+
+* numpy
+* scipy
+* matplotlib
+* gym + ALE
+* tensorflow
+* scikit-learn
+* openCV
+
+## Install ALE
+
 If you have Anaconda installed, first do:
 
 ```{r, engine='bash', count_lines}
