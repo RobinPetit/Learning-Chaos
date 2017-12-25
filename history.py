@@ -41,7 +41,7 @@ class FrameHistory:
 
     
     def get(self):
-        # Return array of shape (AGENT_HISTORY_LENGTH, IMAGE_HEIGHT, IMAGE_WIDTH)
+        # Return array of shape (IMAGE_HEIGHT, IMAGE_WIDTH, AGENT_HISTORY_LENGTH)
         history = np.copy(self.frames_history)
         history = np.swapaxes(history, 0, 1)
         history = np.swapaxes(history, 1, 2)
