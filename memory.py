@@ -12,13 +12,14 @@ class Memory:
 
         self.actions = np.empty(self.memory_size, dtype=np.uint8)
         self.rewards = np.empty(self.memory_size, dtype=np.integer)
-        self.screens = np.empty(self.memory_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, dtype=np.float16)
+        self.screens = np.empty((self.memory_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH), dtype=np.float16)
         self.terminals = np.empty(self.memory_size, dtype=np.bool)
 
         self.minibatch_size = Parameters.MINIBATCH_SIZE
 
-        self.state_t = np.empty((self.minibatch_size, Parameters.AGENT_HISTORY_LENGTH, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH), dtype=np.float16)
-        self.state_t_plus_1 = np.empty((self.minibatch_size, Parameters.AGENT_HISTORY_LENGTH, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH), dtype=np.float16)
+        state_shape = (self.minibatch_size, Parameters.AGENT_HISTORY_LENGTH, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH)
+        self.state_t = np.empty(state_shape, dtype=np.float16)
+        self.state_t_plus_1 = np.empty(state_shape, dtype=np.float16)
 
 
     def add(self, screen, action, reward, terminal):

@@ -2,7 +2,7 @@
 # main.py 
 # author : Robin Petit, Stanislas Gueniffey, Cedric Simar, Antoine Passemiers
 
-from dqn import Agent
+from agent import Agent
 from parameters import Parameters
 
 import gym
@@ -14,10 +14,10 @@ import tensorflow as tf
 if __name__ == "__main__":
     Parameters.load("parameters.json")
     with tf.Session() as session:
-        environment = gym.envs.make(Parameters.SPACE_INVADERS)
+        environment = gym.envs.make(Parameters.GAME)
         actions = environment.action_space
         assert(type(actions) == gym.spaces.discrete.Discrete)
-        agent = Agent(session, actions.shape[0])
+        agent = Agent(environment)
 
         while True:
             s = environment.reset()

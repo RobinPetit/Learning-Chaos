@@ -1,7 +1,12 @@
+# -*- coding: utf-8 -*-
+# dqn.py : Deep Q-Networks
+# author : Robin Petit, Stanislas Gueniffey, Cedric Simar, Antoine Passemiers
 
-import tensorflow as tf
 from tf_decorator import *
 from parameters import Parameters
+
+import tensorflow as tf
+from tensorflow.python.ops import array_ops as tf_array_ops
 
 
 class DQN:
@@ -13,7 +18,7 @@ class DQN:
 
         # weights and biases dictionary
         self.learning_parameters = {}
-        self.layers : {}
+        self.layers = {}
 
         # initialize tensorflow graph
         self.q_values
@@ -35,7 +40,7 @@ class DQN:
         
         """
         [Article] The input to the neural network (the state) consists of an 84 x 84 x 4 image 
-        produced by the preprocessing map ϕ
+        produced by the preprocessing map "phi"
         """
         # reshape input to 4d tensor [batch, height, width, channels]
         input = tf.reshape(self.state, [-1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.M_RECENT_FRAMES])
@@ -133,7 +138,7 @@ class DQN:
                                                     momentum = Parameters.GRADIENT_MOMENTUM,
                                                     epsilon = Parameters.MIN_SQUARED_GRADIENT )
         
-        return(optimizer.minimize(self.error))
+        return(self.optimizer.minimize(self.error))
 
 
     @define_scope
@@ -149,7 +154,7 @@ class DQN:
         # convert the action to one-hot representation in order to compute the error
         action_one_hot = tf.one_hot(self.action, Parameters.ACTION_SPACE, on_value=1, off_value=0, name="action_one_hot")
         
-        self.q_acted = tf.reduce_sum(self.q_values * action_one_hot, axis = 1, name="q_acted")
+        self.q_acted = tf.reduce_sum(self.q_values * tf.cast(action_one_hot, tf.float32), axis = 1, name="q_acted")
         
         self.delta = self.target_q - self.q_acted
 
@@ -166,7 +171,7 @@ class DQN:
         x =  0.5 * x^2                  if |x| <= d
         x =  0.5 * d^2 + d * (|x| - d)  if |x| > d
         """
-        self.clipped_error = tf.array_ops.where(tf.abs(self.delta) < 1.0, 
+        self.clipped_error = tf_array_ops.where(tf.abs(self.delta) < 1.0, 
                                                 tf.square(self.delta) * 0.5,
                                                 tf.abs(self.delta) - 0.5)
         

@@ -6,7 +6,6 @@ from history import Frames_History
 from parameters import Parameters
 import utils
 
-import cv2
 import gym
 import numpy as np
 import matplotlib.pyplot as plt

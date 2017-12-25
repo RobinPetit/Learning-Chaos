@@ -2,9 +2,10 @@
 # utils.py: Image preprocessing
 # author : Robin Petit, Stanislas Gueniffey, Cedric Simar, Antoine Passemiers
 
-import numpy as np
-import cv2
 from parameters import Parameters
+
+import numpy as np
+# import cv2
 
     
 def y_channel(image):

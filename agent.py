@@ -51,9 +51,9 @@ class Agent:
 
             _, q_t, loss = self.tf_session.run([self.dqn.optimize, self.dqn.q_values, self.dqn.error],
             {
-                self.dqn.target_q = target_q_t
-                self.dqn.action = action
-                self.dqn_input = state_t
+                self.dqn.target_q : target_q_t,
+                self.dqn.action : action,
+                self.dqn_input : state_t
             })
 
 

@@ -42,7 +42,7 @@
     },
     "REPLAY_MEMORY_SIZE": {
         "desc": "SGD updates are sampled from this number of most recent frames",
-        "value": 1000000
+        "value": 20000
     },
     "AGENT_HISTORY_LENGTH": {
         "desc": "The number of most recent frames experienced by the agent that are given as input to the Q network",
@@ -99,5 +99,5 @@
     "NO_OP_MAX": {
         "desc": "Maximum number of do-nothing actions to be performed by the agent at the start of an episode",
         "value": 30
-    },
+    }
 }

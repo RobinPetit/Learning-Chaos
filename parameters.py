@@ -4,12 +4,15 @@
 
 from games import Games
 
+import json
+
+
 class Parameters:
 
     # environment settings
     GAMES = Games()
-    GAME = games.SPACE_INVADERS
-    ACTION_SPACE = games.get_action_space(game)
+    GAME = GAMES.SPACE_INVADERS
+    ACTION_SPACE = GAMES.get_action_space(GAME)
     DISPLAY = True
 
     @staticmethod
