@@ -1,5 +1,9 @@
+# -*- coding: utf-8 -*-
+# games.py : Atari games manager
+# author : Robin Petit, Stanislas Gueniffey, Cedric Simar, Antoine Passemiers
 
 import gym
+
 
 class Games:
 
@@ -21,6 +25,11 @@ class Games:
         for game in self.available_games_list:
             dummy_env = gym.envs.make(game)
             self.action_space[game] = dummy_env.action_space.shape[0]
+            # Ensure that the action space is discrete
+            # Our deep RL models are based on the assumption that action selection
+            # is always binary
+            actions = dummy_env.action_space
+            assert(type(actions) == gym.spaces.discrete.Discrete)
 
     def get_action_space(self, game):
         return(self.action_space[game])

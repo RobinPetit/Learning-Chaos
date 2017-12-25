@@ -9,17 +9,20 @@ Q-function, in which m = 4, although the algorithm is robust to different values
 m (for example, 3 or 5).
 """
 
-import numpy as np
 from parameters import Parameters
 
-class Frames_History:
+import numpy as np
+
+
+class FrameHistory:
 
     """ The frame history will be used as an input to the convolutional neural network """
 
     def __init__(self):
             
         """ /!\ Always in Float32 otherwise cv2.resize shits itself /!\ """
-        self.frames_history = np.zeros((Parameters.AGENT_HISTORY_LENGTH, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH), dtype=np.float32)
+        history_shape = (Parameters.AGENT_HISTORY_LENGTH, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH)
+        self.frames_history = np.zeros(history_shape, dtype=np.float32)
 
 
     def add_frame(self, frame):
@@ -38,7 +41,11 @@ class Frames_History:
 
     
     def get(self):
-        return(self.frames_history)
+        # Return array of shape (AGENT_HISTORY_LENGTH, IMAGE_HEIGHT, IMAGE_WIDTH)
+        history = np.copy(self.frames_history)
+        history = np.swapaxes(history, 0, 1)
+        history = np.swapaxes(history, 1, 2)
+        return history
 
 
 

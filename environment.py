@@ -2,11 +2,12 @@
 # environment.py 
 # author : Robin Petit, Stanislas Gueniffey, Cedric Simar, Antoine Passemiers
 
-from history import Frames_History
+from history import FrameHistory
 from parameters import Parameters
 import utils
 
 import gym
+from gym.envs.atari.atari_env import AtariEnv
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -14,15 +15,20 @@ import matplotlib.pyplot as plt
 
 class Environment:
 
+    SHOW_PLT = False
+
     def __init__(self):
 
         self.environment = gym.envs.make(Parameters.GAME)
+        assert(isinstance(self.environment, AtariEnv))
+        assert(isinstance(self.environment.ale, ALEInterface))
         self.new_game()
 
         # let's have a look at the first cnn input
-        for screen in self.history.get():
-            plt.imshow(screen, cmap='gray')
-            plt.show()
+        if Environment.SHOW_PLT:
+            for screen in self.history.get():
+                plt.imshow(screen, cmap='gray')
+                plt.show()
         
 
     def new_game(self):
@@ -46,7 +52,7 @@ class Environment:
 
         """ initialize the history by pushing the first screen 4 (m_recent_frames) times """
 
-        self.history = Frames_History()
+        self.history = FrameHistory()
         for _ in range(Parameters.M_RECENT_FRAMES):
             self.history.add_frame(self.screen)
 
@@ -75,7 +81,7 @@ class Environment:
         self._screen, self.reward, self.terminal, _ = self.environment.step(action)
 
     
-    def act(self, action):
+    def process_step(self, action):
 
         """
         Take the action a certain number of times (Parameters.FRAME_SKIPPING)
@@ -107,12 +113,12 @@ class Environment:
         self.reward = cumulated_reward
         self.render()
 
-        return(self.state)
+        return(self.state, self.reward, self.terminal)
     
     
     @property
     def screen(self):
-        return(utils.screen_resize(utils.y_channel(utils.remove_flickering(self._previous_screen, self._screen))/255))
+        return(utils.preprocess_img(self._previous_screen, self._screen))
 
 
     @property
@@ -125,10 +131,10 @@ class Environment:
         return(self.screen, self.reward, self.terminal)
 
     
-    def render(self):
+    def render(self, mode="human"):
         """
         Display the game on screen only if the display parameter is True
         """
         if(Parameters.DISPLAY):
-            self.environment.render()
+            self.environment.render(mode=mode)
 

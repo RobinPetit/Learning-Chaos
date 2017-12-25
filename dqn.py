@@ -32,7 +32,11 @@ class DQN:
         self.assign_operator = {}
         for variable_name in self.learning_parameters.keys():
             self.l_param_input[variable_name] = tf.placeholder(tf.float32, self.learning_parameters[variable_name].get_shape().as_list(), name=variable_name)
-            self.assign_operator[variable_name] = self.learning_parameters[variable_name].assign(self.l_param_input[variable_name])
+
+            try: # If mutable tensor (Variable)
+                self.assign_operator[variable_name] = self.learning_parameters[variable_name].assign(self.l_param_input[variable_name])
+            except AttributeError:
+                pass # TODO: what should we do?
 
 
     @define_scope

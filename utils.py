@@ -5,7 +5,7 @@
 from parameters import Parameters
 
 import numpy as np
-# import cv2
+import cv2
 
     
 def y_channel(image):
@@ -35,6 +35,8 @@ def remove_flickering(previous_image, image):
     """
     return(np.asarray([previous_image, image]).max(axis=0))
 
+def preprocess_img(previous_image, image):
+    return(screen_resize(y_channel(remove_flickering(previous_image, image))/255))
 
 def reward_clipper(reward):
     """

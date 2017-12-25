@@ -100,7 +100,9 @@ class Agent:
             action = np.random.randint(0, Parameters.ACTION_SPACE, size=1)[0]
         else:
             # take a smart action
-            action = self.tf_session.run(self.dqn.smartest_action, {self.dqn_input: self.environment.get_input()})
+            input_shape = (1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
+            dqn_input = self.environment.get_input().reshape(input_shape)
+            action = self.tf_session.run(self.dqn.smartest_action, {self.dqn_input: dqn_input})
         
         return(action)
 
