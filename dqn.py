@@ -131,7 +131,7 @@ class DQN:
     @define_scope
     def smartest_action(self):
 
-        highest_q_value = tf.argmax(self.q_values, dimension = 1)
+        highest_q_value = tf.argmax(self.q_values, axis=1)
         return(highest_q_value)
 
 
@@ -158,7 +158,7 @@ class DQN:
         # convert the action to one-hot representation in order to compute the error
         action_one_hot = tf.one_hot(self.action, Parameters.ACTION_SPACE, on_value=1, off_value=0, name="action_one_hot")
         
-        self.q_acted = tf.reduce_sum(self.q_values * tf.cast(action_one_hot, tf.float32), axis = 1, name="q_acted")
+        self.q_acted = tf.reduce_sum(self.q_values * tf.cast(action_one_hot, tf.float32), axis=1, name="q_acted")
         
         self.delta = self.target_q - self.q_acted
 

@@ -14,19 +14,21 @@ import tensorflow as tf
 
 if __name__ == "__main__":
     Parameters.load("parameters.json")
-    with tf.Session() as session:
-        environment = Environment()
-        agent = Agent(environment)
+    environment = Environment()
+    agent = Agent(environment)
 
-        while True:
-            environment.render(mode='human')
-            for t in range(Parameters.MAX_STEPS):
-                a = agent.select_action()
-                
-                s_prime, r, done = environment.process_step(a)
-                if done:
-                    break # End of episode
-                time.sleep(1.0 / Parameters.FPS) # Wait one step
-                environment.render()
+    while True:
+        environment.reset()
+        environment.render(mode='human')
+        environment.terminal = False
+        for t in range(Parameters.MAX_STEPS):
+            a = agent.select_action()
+            
+            s_prime, r, done = environment.process_step(a)
+            
+            if done:
+                break # End of episode
+            time.sleep(1.0 / Parameters.FPS) # Wait one step
+            environment.render()
 
-            s = s_prime
+        s = s_prime

@@ -21,9 +21,9 @@ class Environment:
     def __init__(self):
 
         self.environment = gym.envs.make(Parameters.GAME)
-        self.environment = self.environment.unwrapped
-        assert(isinstance(self.environment, AtariEnv))
-        assert(isinstance(self.environment.ale, ALEInterface))
+        self.lives = np.inf
+        # assert(isinstance(self.environment, AtariEnv))
+        # assert(isinstance(self.environment.ale, ALEInterface))
         self.new_game()
 
         # let's have a look at the first cnn input
@@ -80,7 +80,9 @@ class Environment:
 
     def take_action(self, action):
         self._previous_screen = self._screen
-        self._screen, self.reward, self.terminal, _ = self.environment.step(action)
+        self._screen, self.reward, self.terminal, info = self.environment.step(action)
+        self.lives = info["ale.lives"]
+
 
     
     def process_step(self, action):
@@ -90,7 +92,7 @@ class Environment:
         as described in the article
         Return the environment state after taking the action x times
         """
-
+        
         lives_before_action = self.lives
         cumulated_reward = Parameters.NO_REWARD
 
@@ -113,7 +115,6 @@ class Environment:
             skipped += 1
 
         self.reward = cumulated_reward
-        self.render()
 
         return(self.state, self.reward, self.terminal)
     
@@ -121,11 +122,6 @@ class Environment:
     @property
     def screen(self):
         return(utils.preprocess_img(self._previous_screen, self._screen))
-
-
-    @property
-    def lives(self):
-        return(self.environment.ale.lives())
 
     
     @property
@@ -140,3 +136,12 @@ class Environment:
         if(Parameters.DISPLAY):
             self.environment.render(mode=mode)
 
+
+    def reset(self):
+        """
+        Reset the environment only if the number of lives is
+        """
+        if(not self.lives):
+            self.environment.reset()
+
+            
