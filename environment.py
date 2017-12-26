@@ -130,7 +130,7 @@ class Environment:
     
     @property
     def state(self):
-        return(self.screen, self.reward, self.terminal)
+        return(self.screen)
 
     
     def render(self, mode="human"):
