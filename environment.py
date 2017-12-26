@@ -8,6 +8,7 @@ import utils
 
 import gym
 from gym.envs.atari.atari_env import AtariEnv
+from atari_py import ALEInterface
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -20,6 +21,7 @@ class Environment:
     def __init__(self):
 
         self.environment = gym.envs.make(Parameters.GAME)
+        self.environment = self.environment.unwrapped
         assert(isinstance(self.environment, AtariEnv))
         assert(isinstance(self.environment.ale, ALEInterface))
         self.new_game()
