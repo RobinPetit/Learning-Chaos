@@ -38,12 +38,14 @@ class Agent:
     
     def load_session(self):
         save_file = path.join(Parameters.SESSION_SAVE_DIRECTORY, Parameters.SESSION_SAVE_FILENAME)
-        if path.exists(save_file) and path.isfile(save_file):
+        if path.exists(Parameters.SESSION_SAVE_DIRECTORY):
                 # restore from a previously saved session
+                print("Loading session from", save_file)
                 tf_saver = tf.train.Saver()
                 tf_saver.restore(self.tf_session, save_file)
         else:
                 # initialize from scratch
+                print("Loading new session")
                 self.tf_session.run(tf.global_variables_initializer())
                 
     
@@ -53,6 +55,7 @@ class Agent:
                 makedirs(Parameters.SESSION_SAVE_DIRECTORY)
         tf_saver = tf.train.Saver()
         tf_saver.save(self.tf_session, save_file)
+        print("Saved session to", save_file)
 
 
     def train(self):
@@ -85,7 +88,7 @@ class Agent:
                 
                 self.step += 1
                 
-                if self.step % 10000 == 0:
+                if self.step % 1000 == 0:
                         self.save_session()
         
         self.save_session()

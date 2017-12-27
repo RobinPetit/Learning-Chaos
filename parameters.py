@@ -41,7 +41,7 @@ class Parameters:
             data = json.load(f)
             for key in data.keys():
                 if type(data[key]) == dict:
-                    if key == "SESSION_SAVE_FILENAME":
-                        # make session filename specific to the game being played
-                        data[key]["value"] = data[key]["value"].replace(".", "_"+Parameters.GAME+".")
+                    if key in ("SESSION_SAVE_FILENAME", "SESSION_SAVE_DIRECTORY"):
+                        # make session path specific to the game being played
+                        data[key]["value"] = data[key]["value"] + Parameters.GAME
                     Parameters.add_attr(key, data[key]["value"])
