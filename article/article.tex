@@ -22,14 +22,14 @@ apassemi@ulb.ac.be}
 \begin{abstract}
 
   Reinforcement learning is a subarea of machine learning inspired by neuroscience, where learners have to select actions with
-  regards to the environement state and receive a reward accordingly. Each agent's objective is to maximize its cumulative reward across its whole lifetime,
+  regards to the environment state and receive a reward accordingly. Each agent's objective is to maximize its cumulative reward across its whole lifetime,
   subdivided into episodes. In the traditional framework of reinforcement learning and more specifically in Q-learning,
   researchers usually deal with a small discrete space to represent the values of Q. This is no longer sufficient if one desires to describe the environment state
   as an image of raw pixels. In consequence, we introduce deep Q-learning methods, which have been found to be really effective in mapping raw pixels
   to abstract high-level features. In deep Q-learning, the estimation of Q-values for a given action are produced using deep neural networks,
   which consist of many neural layers stacked on top of each other.
   These techniques have revealed themselves to be able to beat human experts at playing Atari games
-  by learning only from visual features. Despite the current progress, learning to take complex decisions on the basis of high-dimensional visual data remains on
+  by learning only from visual features. Despite the current progress, learning how to take complex decisions on the basis of high-dimensional visual data remains an
   ongoing challenge. In particular, because of the instability of neural networks, we also explored state-of-the-art dueling architectures to enhance performance
   by separating the high-level representation of states and action values (rewards).
 
@@ -48,25 +48,26 @@ with respect to the environment state and the action selected at $t$.
 
 Because of the very high dimensionality of input visual features, it is not reasonable to consider using a table for storing all Q-values.
 Instead, one can design a learnable function that maps pixel values to a single row of this table, thus a vector of Q-values whose length is the size
-of the action space. For that purpose we used a Deep Q-Network (DQN) to approximate this function, as in the original DQN article \citep{Mnih2015}.
-A DQN is a particular instance of Convolutional Neural Networks (CNN) and is composed of a stack of neural layers. One characteristic of CNNs is the
+of the action space. For that purpose we used a Deep Q-Network (DQN) to approximate this function, as in the original DQN article~\citep{Mnih2015}, since feedforward Neural Networks
+are known to be universal function approximators~\citep{hornik1991approximation}.
+A DQN is a particular instance of Convolutional Neural Networks (CNN) and is composed of a stack of neural layers~\citep{lecun1998gradient}. One characteristic of CNNs is the
 presence of convolutional filters that maps pixel luminance to more abstract features. Each filter (or kernel) is locally connected to its output, which
 allows the convolutional layer to capture the local information of the pixels, contrary to what dense (fully-connected) layers do. This procedure is greatly
-inspired by the notion of receptive field introduced by Hubel and Wiesel \citep{Hubel1962}.
+inspired by the notion of receptive field introduced by Hubel and Wiesel~\citep{Hubel1962}.
 Let $Q(s, a; \theta_i)$ be the Q-value approximation function represented by the neural network, parameterized by its weights $\theta$ at time step $i$.
 
 Since we are handling visual features, we used screen frames as environment state representations. Each frame is a (210 x 160) color image sampled at
 a frequency of 60 Hz. We denote the environment state at current step $t$ by $s_t$. The agent gathers experience by incorporating new experience samples
 to its history. An experience is a tuple $e_t = (s_t, a_t, r_t, s_{t+1})$ appended to the experience history immediately after being generated.
 To prevent the agent from forgetting the history and increase the bias towards most recent experience samples, we have recourse to the experience
-replay algorithm. One can straightforwardly implement it as a uniform sampling algorithm that returns random experience samples at each step.
-We compared this technique to a more efficient approach called prioritized experience replay \citep{DBLP:journals/corr/SchaulQAS15}.
+replay algorithm ~\citep{adam2012experience}. One can straightforwardly implement it as a uniform sampling algorithm that returns random experience samples at each step.
+We compared this technique to a more efficient approach called prioritized experience replay~\citep{DBLP:journals/corr/SchaulQAS15}.
 To emphasize the importance of the memory replay mechanism, we compared the results obtained using prioritized experience replay, regular
 experience replay, and no experience replay.
 
 Every 4 steps of the Q-learning, the agent builds a minibatch from its memory (either one of the three mechanisms we just mentioned):
 this minibatch is used by the DQN to process one step of stochastic gradient descent. In this way the values of Q are estimated iteratively and
-refined over time. The deep neural network incorporates minimal prior knowledge about the environment: the only assumption lies in the number of 
+refined over time. The deep neural network incorporates minimal prior knowledge about the environment: the only assumption lies in the number of
 outputs in the last hidden layer, which has been set as the number of actions. In every Atari game, the action space is discrete and finite: this allows
 us to determine the output shape of the neural network depending on the game itself. The number of actions made available by the environment
 cannot be inferred by the DQN during training phase.
@@ -74,7 +75,7 @@ cannot be inferred by the DQN during training phase.
 Also we compared DQN, as well as other state-of-the-art deep reinforcement learning architectures, to simpler reinforcement learning techniques (including
 random action selection) using a normalized performance metric. The latter is formalized as below:
 \[
-    P = 100 \times (score - RAS) / (HS - RAS)
+    P = 100 \times (\text{score} - RAS) / (HS - RAS)
 \]
 where P designates the normalized performance, RAS the random action selection score, and HS the human score obtained in average by our
 Space Invaders professional gamer \textbf{Stanislas Gueniffey}. By normalizing in this manner, the random action selection score RAS results in
@@ -89,14 +90,14 @@ other than its own. \todo{On peut en faire qqch pas vrai ?}
 
 Our source code is available at \url{https://github.com/RobinPetit/Learning-Chaos}
 
-We developed our models with the support of the Arcade Learning Environment \citep{bellemare13arcade}. This gives the opportunity to either
+We developed our models with the support of the Arcade Learning Environment~\citep{bellemare13arcade}. This gives the opportunity to either
 retrieve the environment state as a raw image (for deep reinforcement learning research) or as a state of the RAM (for classic reinforcement learning
-applications). Because of the very high dimensionality of raw images, we applied some preprocessing steps on them. These steps are also aimed at 
+applications). Because of the very high dimensionality of raw images, we applied some preprocessing steps on them. These steps are also aimed at
 removing some artifacts produced by the Atari architecture. More specifically, the flickering effect implies that some game sprites only appear
 in one out of two frames. An easy solution consists in taking the pixelwise maximum value between the current frame and the previous frame.
 Then the sample size has been reduced by a factor of three by mapping RBG values to the pixel luminance, using the following formula:
 \[
-    luminance = 0.299 \times R + 0.587 \times G + 0.114 \times B
+    \text{luminance} = 0.299 \times R + 0.587 \times G + 0.114 \times B
 \]
 After mapping the three color channels to a unique channel, the number of pixels has also been reduced. Each input image as been rescaled to a
 $84 \times 84$ pixel grid.
@@ -107,11 +108,11 @@ $84 \times 84$ pixel grid.
 
   \todo{Plots avec les erreurs d'apprentissage (pas de cross-val)}
 
-  \todo{Magnifique plot T-SNE avec des couleurs et des gifs et des trucs qui font beep et qui font boop} \citep{wattenberg2016how}
+  \todo{Magnifique plot T-SNE avec des couleurs et des gifs et des trucs qui font beep et qui font boop}~\citep{wattenberg2016how}
 
 \section{Discussion}
 
-  \todo{Amélioration: Double dueling DQN} \citep{DBLP:journals/corr/WangFL15}
+  \todo{Amélioration: Double dueling DQN}~\citep{DBLP:journals/corr/WangFL15}
 
 \section{Acknowledgements}
 
