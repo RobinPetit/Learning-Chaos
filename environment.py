@@ -2,17 +2,16 @@
 # environment.py 
 # author : Robin Petit, Stanislas Gueniffey, Cedric Simar, Antoine Passemiers
 
-from history import FrameHistory
+from history import FramesHistory
 from parameters import Parameters
 import utils
 
 import gym
 from gym.envs.atari.atari_env import AtariEnv
-from atari_py import ALEInterface
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-# ϕ
 
 class Environment:
 
@@ -22,8 +21,6 @@ class Environment:
 
         self.environment = gym.envs.make(Parameters.GAME)
         self.lives = np.inf
-        # assert(isinstance(self.environment, AtariEnv))
-        # assert(isinstance(self.environment.ale, ALEInterface))
         self.new_game()
 
         # let's have a look at the first cnn input
@@ -52,10 +49,10 @@ class Environment:
 
     def initialize_screens_history(self):
 
-        """ initialize the history by pushing the first screen 4 (m_recent_frames) times """
+        """ initialize the history by pushing the first screen 4 (AGENT_HISTORY_LENGTH) times """
 
-        self.history = FrameHistory()
-        for _ in range(Parameters.M_RECENT_FRAMES):
+        self.history = FramesHistory()
+        for _ in range(Parameters.AGENT_HISTORY_LENGTH):
             self.history.add_frame(self.screen)
 
     

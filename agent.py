@@ -9,6 +9,8 @@ from parameters import Parameters
 from dqn import DQN
 
 import random
+import time
+
 import numpy as np
 import tensorflow as tf
 
@@ -22,16 +24,48 @@ class Agent:
         self.step = 0
         
         # initialize the DQN and target DQN (with respective placeholders)
-        self.dqn_input = tf.placeholder(tf.float32, [None, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.M_RECENT_FRAMES], name = "DQN_input")
+        self.dqn_input = tf.placeholder(tf.float32, [None, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH], name = "DQN_input")
         self.dqn = DQN(self.dqn_input)
 
-        self.target_dqn_input = tf.placeholder(tf.float32, [None, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.M_RECENT_FRAMES], name = "target_DQN_input")
+        self.target_dqn_input = tf.placeholder(tf.float32, [None, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH], name = "target_DQN_input")
         self.target_dqn = DQN(self.target_dqn_input)
 
         # initialize the tensorflow session and variables
         self.tf_session = tf.Session()
         self.tf_session.run(tf.global_variables_initializer())
 
+
+    def train(self):
+
+        self.step = 0
+
+        while(self.step < Parameters.MAX_STEPS):
+
+            self.environment.render(mode='human')
+            self.environment.terminal = False
+            for t in range(Parameters.MAX_STEPS):
+                
+                # select an action
+                action = self.select_action()
+                
+                # process step
+                state, reward, terminal = self.environment.process_step(action)
+                
+                # observe the consequence of the action
+                self.observe(state, action, reward, terminal)
+
+                if terminal:
+                    self.environment.reset()
+                    break
+
+                if(Parameters.SLEEP_BETWEEN_STEPS):
+                    time.sleep(1.0 / Parameters.FPS) # Wait one step
+
+                self.environment.render()
+                
+                self.step += 1
+
+            
 
     
     def batch_q_learning(self):
@@ -93,8 +127,9 @@ class Agent:
         # compute epsilon at step t
         dt_final = Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION
         dt = self.step - Parameters.REPLAY_START_SIZE
-        eps = Parameters.FINAL_EXPLORATION + max(0., dt * (Parameters.FINAL_EXPLORATION_FRAME - max(0., dt)) / Parameters.FINAL_EXPLORATION_FRAME)
-
+        df = Parameters.FINAL_EXPLORATION_FRAME - Parameters.REPLAY_START_SIZE
+        eps = Parameters.INITIAL_EXPLORATION - ((dt / df) * (Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION))
+        eps = 0
         if random.random() < eps:
             # take a random action
             action = np.random.randint(0, Parameters.ACTION_SPACE, size=1)[0]
@@ -102,6 +137,8 @@ class Agent:
             # take a smart action
             input_shape = (1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
             dqn_input = self.environment.get_input().reshape(input_shape)
+            q_print = self.tf_session.run(self.dqn.q_values, {self.dqn_input: dqn_input})
+            print("Q-values: ", q_print, "  at step : ", self.step)
             action = self.tf_session.run(self.dqn.smartest_action, {self.dqn_input: dqn_input})
         
         return(action)
@@ -114,18 +151,15 @@ class Agent:
         """
 
         for learning_parameter in self.dqn.learning_parameters:
-            dqn_value = self.dqn.get_value(learning_parameter)
+            dqn_value = self.dqn.get_value(learning_parameter, self.tf_session)
             if(dqn_value is not None):
-                self.target_dqn.set_value(learning_parameter, self.dqn.get_value(learning_parameter))
+                self.target_dqn.set_value(learning_parameter, dqn_value, self.tf_session)
             else:
                 print("Impossible to set value: None")
 
-
-    def train(self):
-        print("TODO tomorrow XMAS <3")
     
     def play(self):
-        print("TODO tomorrow XMAS <3")
+        print("To do")
 
     
 

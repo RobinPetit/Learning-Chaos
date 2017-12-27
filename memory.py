@@ -17,7 +17,7 @@ class Memory:
 
         self.minibatch_size = Parameters.MINIBATCH_SIZE
 
-        state_shape = (self.minibatch_size, Parameters.AGENT_HISTORY_LENGTH, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH)
+        state_shape = (self.minibatch_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
         self.state_t = np.empty(state_shape, dtype=np.float16)
         self.state_t_plus_1 = np.empty(state_shape, dtype=np.float16)
 
@@ -48,6 +48,9 @@ class Memory:
             else:
                 # negative indices don't work well with slices in numpy..
                 state = self.screens[np.array([(state_index-i) % self.memory_usage for i in reversed(range(Parameters.AGENT_HISTORY_LENGTH))]), ...]
+                
+        state = np.swapaxes(state, 0, 1)
+        state = np.swapaxes(state, 1, 2)
 
         return(state)
         

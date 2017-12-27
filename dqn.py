@@ -28,15 +28,17 @@ class DQN:
         # Initialize input placeholder to assign values to weights and biases
         # Used when we transfert them from the training network to the target network
         # or when we load DQN parameters previously saved in a file
-        self.l_param_input = {}
-        self.assign_operator = {}
-        for variable_name in self.learning_parameters.keys():
-            self.l_param_input[variable_name] = tf.placeholder(tf.float32, self.learning_parameters[variable_name].get_shape().as_list(), name=variable_name)
+        with tf.variable_scope("test"):
+                
+            self.l_param_input = {}
+            self.assign_operator = {}
+            for variable_name in self.learning_parameters.keys():
+                self.l_param_input[variable_name] = tf.placeholder(tf.float32, self.learning_parameters[variable_name].get_shape().as_list(), name=variable_name)
 
-            try: # If mutable tensor (Variable)
-                self.assign_operator[variable_name] = self.learning_parameters[variable_name].assign(self.l_param_input[variable_name])
-            except AttributeError:
-                pass # TODO: what should we do?
+                try: # If mutable tensor (Variable)
+                    self.assign_operator[variable_name] = self.learning_parameters[variable_name].assign(self.l_param_input[variable_name])
+                except AttributeError as e:
+                    print(e)
 
 
     @define_scope
@@ -47,14 +49,14 @@ class DQN:
         produced by the preprocessing map "phi"
         """
         # reshape input to 4d tensor [batch, height, width, channels]
-        input = tf.reshape(self.state, [-1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.M_RECENT_FRAMES])
+        input = tf.reshape(self.state, [-1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH])
 
         # convolutional layer 1
         """
         [Article] The first hidden layer convolves 32 filters of 8 x 8 with stride 4 with the
         input image and applies a rectifier nonlinearity
         """
-        W_conv1 = self.weight_variable([8, 8, Parameters.M_RECENT_FRAMES, 32])
+        W_conv1 = self.weight_variable([8, 8, Parameters.AGENT_HISTORY_LENGTH, 32])
         b_conv1 = self.bias_variable([32])
         conv1 = tf.nn.conv2d(input, W_conv1, strides=[1, 4, 4, 1], padding='VALID') # would 'SAME' also work ?
         h_conv1 = tf.nn.relu(conv1 + b_conv1)
@@ -198,34 +200,38 @@ class DQN:
         Initialize bias variables of a specific shape using a constant
         """
         bias_var = tf.constant(0.1, shape=shape)  # 0 used in the other implementation
-        return(bias_var)
+        return(tf.Variable(bias_var))
 
 
-    def get_value(self, var_name):
+    def get_value(self, var_name, tf_session):
         """
         Return the value of the tf variable named [var_name] if it exists, None otherwise
         """
         
         if var_name in self.learning_parameters:
 
-            value = self.learning_parameters[var_name].eval()
+            value = tf_session.run(self.learning_parameters[var_name])
 
         elif var_name in self.layers:
 
-            value = self.layers[var_name].eval()
+            value = tf_session.run(self.layers[var_name])
+
         else:
             print("Unknown DQN variable: " + var_name)
-            value = None
-        
+            assert(0) # <3
+    
         return(value)
     
-
-    def set_value(self, var_name, new_value):
+    
+    def set_value(self, var_name, new_value, tf_session):
         """
         Set the value of the tf variable [var_name] to [new_value]
         """
+                        
         if(var_name in self.assign_operator):
-            self.assign_operator[var_name].eval({self.l_param_input[var_name]: new_value})
+
+            tf_session.run(self.assign_operator[var_name], {self.l_param_input[var_name]: new_value})
+
         else:
             print("Thou shall only assign learning parameters!")
 

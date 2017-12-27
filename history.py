@@ -14,7 +14,7 @@ from parameters import Parameters
 import numpy as np
 
 
-class FrameHistory:
+class FramesHistory:
 
     """ The frame history will be used as an input to the convolutional neural network """
 

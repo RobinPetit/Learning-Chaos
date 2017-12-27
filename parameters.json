@@ -12,10 +12,6 @@
         "desc": "Image height",
         "value": 84
     },
-    "M_RECENT_FRAMES": {
-        "desc": "The function w from algorithm ϕ described below applies this preprocessing to the m most recent frames and stacks them to produce the input to the Q-function, in which m = 4, although the algorithm is robust to different values of m (for example, 3 or 5).",
-        "value": 4
-    },
     "POSITIVE_REWARD": {
         "desc": "As the scale of scores varies greatly from game to game, we clipped all positive rewards at 1 and all negative rewards at 21, leaving 0 rewards unchanged. Clipping the rewards in this manner limits the scale of the error derivatives and makes it easier to use the same learning rate across multiple games. At the same time, it could affect the performance of our agent since it cannot differentiate between rewards of different magnitude.",
         "value": 1
@@ -30,7 +26,7 @@
     },
     "MAX_STEPS": {
         "desc": "Number of steps before to interrupt the learning procedure",
-        "value": 10000000  
+        "value": 1000000  
     },
     "FPS": {
         "desc": "Number of frames per second / frame sampling frequency",
@@ -42,14 +38,14 @@
     },
     "REPLAY_MEMORY_SIZE": {
         "desc": "SGD updates are sampled from this number of most recent frames",
-        "value": 20000
+        "value": 50000
     },
     "AGENT_HISTORY_LENGTH": {
         "desc": "The number of most recent frames experienced by the agent that are given as input to the Q network",
         "value": 4
     },
     "TARGET_NETWORK_UPDATE_FREQUENCY": {
-        "desc": "The frequency (measured in the number of parameter updates) with which the target network is updated (this corresponds to the parameter C from Algorithm 1)",
+        "desc": "(Default: 10000) The frequency (measured in the number of parameter updates) with which the target network is updated (this corresponds to the parameter C from Algorithm 1)",
         "value": 10000
     },
     "DISCOUNT_FACTOR": {
@@ -93,8 +89,8 @@
         "value": 1000000
     },
     "REPLAY_START_SIZE": {
-        "desc": "A uniform random policy is run for this number of frames before learning starts and the resulting experience is used to populate the replay memory",
-        "value": 50000
+        "desc": "(Default: 50.000) A uniform random policy is run for this number of frames before learning starts and the resulting experience is used to populate the replay memory",
+         "value": 10
     },
     "NO_OP_MAX": {
         "desc": "Maximum number of do-nothing actions to be performed by the agent at the start of an episode",
