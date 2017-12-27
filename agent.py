@@ -33,7 +33,7 @@ class Agent:
 
         # initialize the tensorflow session and variables
         self.tf_session = tf.Session()
-        load_session()
+        self.load_session()
         
     
     def load_session(self):
@@ -49,7 +49,7 @@ class Agent:
     
     def save_session(self):
         save_file = path.join(Parameters.SESSION_SAVE_DIRECTORY, Parameters.SESSION_SAVE_FILENAME)
-        if not path.exists(save_file):
+        if not path.exists(Parameters.SESSION_SAVE_DIRECTORY):
                 makedirs(Parameters.SESSION_SAVE_DIRECTORY)
         tf_saver = tf.train.Saver()
         tf_saver.save(self.tf_session, save_file)
@@ -84,7 +84,11 @@ class Agent:
                 self.environment.render()
                 
                 self.step += 1
-
+                
+                if self.step % 10000 == 0:
+                        self.save_session()
+        
+        self.save_session()
             
 
     
