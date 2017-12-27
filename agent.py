@@ -7,6 +7,7 @@ from environment import Environment
 from memory import Memory
 from parameters import Parameters
 from dqn import DQN
+from os import path, makedirs
 
 import random
 import time
@@ -32,7 +33,26 @@ class Agent:
 
         # initialize the tensorflow session and variables
         self.tf_session = tf.Session()
-        self.tf_session.run(tf.global_variables_initializer())
+        load_session()
+        
+    
+    def load_session(self):
+        save_file = path.join(Parameters.SESSION_SAVE_DIRECTORY, Parameters.SESSION_SAVE_FILENAME)
+        if path.exists(save_file) and path.isfile(save_file):
+                # restore from a previously saved session
+                tf_saver = tf.train.Saver()
+                tf_saver.restore(self.tf_session, save_file)
+        else:
+                # initialize from scratch
+                self.tf_session.run(tf.global_variables_initializer())
+                
+    
+    def save_session(self):
+        save_file = path.join(Parameters.SESSION_SAVE_DIRECTORY, Parameters.SESSION_SAVE_FILENAME)
+        if not path.exists(save_file):
+                makedirs(Parameters.SESSION_SAVE_DIRECTORY)
+        tf_saver = tf.train.Saver()
+        tf_saver.save(self.tf_session, save_file)
 
 
     def train(self):
