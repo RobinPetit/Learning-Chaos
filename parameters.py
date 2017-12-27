@@ -14,7 +14,7 @@ class Parameters:
     GAME = GAMES.SPACE_INVADERS
     ACTION_SPACE = GAMES.get_action_space(GAME)
     DISPLAY = True
-    SLEEP_BETWEEN_STEPS = True
+    SLEEP_BETWEEN_STEPS = False
 
     @staticmethod
     def add_attr(name, value):

@@ -156,7 +156,6 @@ class Agent:
         dt = self.step - Parameters.REPLAY_START_SIZE
         df = Parameters.FINAL_EXPLORATION_FRAME - Parameters.REPLAY_START_SIZE
         eps = Parameters.INITIAL_EXPLORATION - ((dt / df) * (Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION))
-        eps = 0
         if random.random() < eps:
             # take a random action
             action = np.random.randint(0, Parameters.ACTION_SPACE, size=1)[0]
@@ -165,7 +164,6 @@ class Agent:
             input_shape = (1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
             dqn_input = self.environment.get_input().reshape(input_shape)
             q_print = self.tf_session.run(self.dqn.q_values, {self.dqn_input: dqn_input})
-            print("Q-values: ", q_print, "  at step : ", self.step)
             action = self.tf_session.run(self.dqn.smartest_action, {self.dqn_input: dqn_input})
         
         return(action)
