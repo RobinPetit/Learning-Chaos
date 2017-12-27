@@ -98,10 +98,10 @@
     },
     "SESSION_SAVE_DIRECTORY": {
         "desc": "Directory where the TensorFlow session is saved",
-        "value": "./checkpoints"
+        "value": "./checkpoints/"
     },
     "SESSION_SAVE_FILENAME": {
         "desc": "Name of the file where the TensorFlow session is saved",
-        "value": "model.ckpt"
+        "value": "model_"
     }
 }
