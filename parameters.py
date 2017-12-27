@@ -14,7 +14,7 @@ class Parameters:
     GAME = GAMES.SPACE_INVADERS
     ACTION_SPACE = GAMES.get_action_space(GAME)
     DISPLAY = True
-    SLEEP_BETWEEN_STEPS = True
+    SLEEP_BETWEEN_STEPS = False
 
     @staticmethod
     def add_attr(name, value):
@@ -41,4 +41,7 @@ class Parameters:
             data = json.load(f)
             for key in data.keys():
                 if type(data[key]) == dict:
+                    if key in ("SESSION_SAVE_FILENAME", "SESSION_SAVE_DIRECTORY"):
+                        # make session path specific to the game being played
+                        data[key]["value"] = data[key]["value"] + Parameters.GAME
                     Parameters.add_attr(key, data[key]["value"])

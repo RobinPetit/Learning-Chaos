@@ -95,5 +95,13 @@
     "NO_OP_MAX": {
         "desc": "Maximum number of do-nothing actions to be performed by the agent at the start of an episode",
         "value": 30
+    },
+    "SESSION_SAVE_DIRECTORY": {
+        "desc": "Directory where the TensorFlow session is saved",
+        "value": "./checkpoints/"
+    },
+    "SESSION_SAVE_FILENAME": {
+        "desc": "Name of the file where the TensorFlow session is saved",
+        "value": "model_"
     }
 }

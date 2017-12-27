@@ -7,6 +7,7 @@ from environment import Environment
 from memory import Memory
 from parameters import Parameters
 from dqn import DQN
+from os import path, makedirs
 
 import random
 import time
@@ -32,7 +33,29 @@ class Agent:
 
         # initialize the tensorflow session and variables
         self.tf_session = tf.Session()
-        self.tf_session.run(tf.global_variables_initializer())
+        self.load_session()
+        
+    
+    def load_session(self):
+        save_file = path.join(Parameters.SESSION_SAVE_DIRECTORY, Parameters.SESSION_SAVE_FILENAME)
+        if path.exists(Parameters.SESSION_SAVE_DIRECTORY):
+                # restore from a previously saved session
+                print("Loading session from", save_file)
+                tf_saver = tf.train.Saver()
+                tf_saver.restore(self.tf_session, save_file)
+        else:
+                # initialize from scratch
+                print("Loading new session")
+                self.tf_session.run(tf.global_variables_initializer())
+                
+    
+    def save_session(self):
+        save_file = path.join(Parameters.SESSION_SAVE_DIRECTORY, Parameters.SESSION_SAVE_FILENAME)
+        if not path.exists(Parameters.SESSION_SAVE_DIRECTORY):
+                makedirs(Parameters.SESSION_SAVE_DIRECTORY)
+        tf_saver = tf.train.Saver()
+        tf_saver.save(self.tf_session, save_file)
+        print("Saved session to", save_file)
 
 
     def train(self):
@@ -64,7 +87,11 @@ class Agent:
                 self.environment.render()
                 
                 self.step += 1
-
+                
+                if self.step % 1000 == 0:
+                        self.save_session()
+        
+        self.save_session()
             
 
     
@@ -129,7 +156,6 @@ class Agent:
         dt = self.step - Parameters.REPLAY_START_SIZE
         df = Parameters.FINAL_EXPLORATION_FRAME - Parameters.REPLAY_START_SIZE
         eps = Parameters.INITIAL_EXPLORATION - ((dt / df) * (Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION))
-        eps = 0
         if random.random() < eps:
             # take a random action
             action = np.random.randint(0, Parameters.ACTION_SPACE, size=1)[0]
@@ -138,7 +164,6 @@ class Agent:
             input_shape = (1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
             dqn_input = self.environment.get_input().reshape(input_shape)
             q_print = self.tf_session.run(self.dqn.q_values, {self.dqn_input: dqn_input})
-            print("Q-values: ", q_print, "  at step : ", self.step)
             action = self.tf_session.run(self.dqn.smartest_action, {self.dqn_input: dqn_input})
         
         return(action)
