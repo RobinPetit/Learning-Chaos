@@ -1,8 +1,9 @@
 SRC=article.tex
 AUX=$(SRC:.tex=.aux)
-BIB=article.bib
+BIB=$(SRC:.tex=.bib)
+OUT=$(SRC:.tex=.pdf)
 
-default: article.pdf
+default: ${OUT}
 
 article.pdf: ${SRC} ${BIB}
 	pdflatex ${SRC}
@@ -11,4 +12,4 @@ article.pdf: ${SRC} ${BIB}
 	pdflatex ${SRC}
 
 clean:
-	rm -f article.pdf article.aux article.log article.log
+	rm -f ${OUT} *.aux *.log *.log *.bbl *.blg *.out
