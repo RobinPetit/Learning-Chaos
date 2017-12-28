@@ -1,18 +1,30 @@
+# -*- coding: utf-8 -*-
+# memory.py : Agent's short term and long term memory
+# author : Robin Petit, Stanislas Gueniffey, Cedric Simar, Antoine Passemiers
 
 from parameters import Parameters
 import numpy as np
 
+
 class Memory:
 
-    def __init__(self):
+    def __init__(self, destination="mem.dat"):
+        """
+        :param destination: str
+            Path to the file where the long-term experience must be stored
+            Note: Files cannot be larger than 2 Gb in 32-bit architectures
+        """
 
-        self.memory_size = Parameters.REPLAY_MEMORY_SIZE
+        self.memory_filepath = destination
+
+        self.memory_size = Parameters.LONG_TERM_MEMORY_SIZE
         self.current_memory_index = 0
         self.memory_usage = 0
 
         self.actions = np.empty(self.memory_size, dtype=np.uint8)
         self.rewards = np.empty(self.memory_size, dtype=np.integer)
-        self.screens = np.empty((self.memory_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH), dtype=np.float16)
+        screens_shape = (self.memory_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH)
+        self.screens = np.memmap(self.memory_filepath, mode="w+", shape=screens_shape, dtype=np.float16)
         self.terminals = np.empty(self.memory_size, dtype=np.bool)
 
         self.minibatch_size = Parameters.MINIBATCH_SIZE
