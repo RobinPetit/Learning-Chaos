@@ -9,7 +9,6 @@ class Games:
 
     def __init__(self):   
 
-        # Cool (easy) Atari environments available
         self.ASTEROIDS = "Asteroids-v0"
         self.PONG = "Pong-v0"
         self.SPACE_INVADERS = "SpaceInvaders-v0"
@@ -17,8 +16,6 @@ class Games:
 
         self.available_games_list = [self.ASTEROIDS, self.PONG, self.SPACE_INVADERS, self.TENNIS]
         self.action_space = {}
-        self.define_action_spaces()
-
 
     def define_action_spaces(self):
         
@@ -32,6 +29,8 @@ class Games:
             assert(type(actions) == gym.spaces.discrete.Discrete)
 
     def get_action_space(self, game):
+        if len(self.action_space.values()) < len(self.available_games_list):
+            self.define_action_spaces()
         return(self.action_space[game])
 
         

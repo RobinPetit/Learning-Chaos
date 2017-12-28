@@ -4,6 +4,7 @@
 
 from history import FramesHistory
 from parameters import Parameters
+from plot import Plotter
 import utils
 
 import gym
@@ -40,7 +41,8 @@ class Environment:
         self.take_action(first_action)
         self.render()
         self.reward = 0
-        self.terminal = False # True? -> Parameter ?
+        self.episode_score = 0
+        self.terminal = False
 
         self.initialize_screens_history()
 
@@ -99,6 +101,7 @@ class Environment:
             
             self.take_action(action)
             cumulated_reward += self.reward
+            self.episode_score += self.reward
 
             """
             [Article] For games where there is a life counter, the Atari
@@ -108,6 +111,9 @@ class Environment:
             if self.lives < lives_before_action:
                 cumulated_reward += Parameters.NEGATIVE_REWARD
                 self.terminal = True
+
+                Plotter.add_episode_score(self.episode_score)
+                self.episode_score = 0
             
             skipped += 1
 

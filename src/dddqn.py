@@ -12,8 +12,8 @@ from tensorflow.python.ops import array_ops as tf_array_ops
 
 class DDDQN(DQN):
 
-    def __init__(self, state):
-        DQN.__init__(self, state)
+    def __init__(self, state, action_space):
+        DQN.__init__(self, state, action_space)
 
     @define_scope
     def q_values(self):
@@ -78,7 +78,7 @@ class DDDQN(DQN):
         sv_stream = tf.contrib.layers.flatten(sv_stream)
 
         # Add one fully connected linear layer per stream
-        W_apa = self.weight_variable([1568, Parameters.ACTION_SPACE], method="xavier")
+        W_apa = self.weight_variable([1568, self.action_space], method="xavier")
         W_sv = self.weight_variable([1568, 1], method="xavier")
         fc_apa = tf.matmul(apa_stream, W_apa)
         fc_sv = tf.matmul(sv_stream, W_sv)

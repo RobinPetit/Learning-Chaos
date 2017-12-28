@@ -6,10 +6,11 @@ from utils import reward_clipper
 from environment import Environment
 from memory import Memory
 from parameters import Parameters
+from plot import Plotter
 from dqn import DQN
 from dddqn import DDDQN
-from os import path, makedirs
 
+from os import path, makedirs
 import random
 import time
 
@@ -21,16 +22,17 @@ class Agent:
 
     def __init__(self, environment):
         
+        self.action_space = Parameters.GAMES.get_action_space(Parameters.GAME)
         self.environment = environment
         self.memory = Memory()
         self.step = 0
         
         # initialize the DQN and target DQN (with respective placeholders)
         self.dqn_input = tf.placeholder(tf.float32, [None, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH], name = "DQN_input")
-        self.dqn = DDDQN(self.dqn_input)
+        self.dqn = DDDQN(self.dqn_input, self.action_space)
 
         self.target_dqn_input = tf.placeholder(tf.float32, [None, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH], name = "target_DQN_input")
-        self.target_dqn = DQN(self.target_dqn_input)
+        self.target_dqn = DQN(self.target_dqn_input, self.action_space)
 
         # initialize the tensorflow session and variables
         self.tf_session = tf.Session()
@@ -56,6 +58,7 @@ class Agent:
                 makedirs(Parameters.SESSION_SAVE_DIRECTORY)
         tf_saver = tf.train.Saver()
         tf_saver.save(self.tf_session, save_file)
+        Plotter.save("out")
         print("Saved session to", save_file)
 
 
@@ -101,6 +104,8 @@ class Agent:
         Apply Q-learning updates, or minibatch updates, to samples of experience,
         (s, a, r, s') ~ U(D), drawn at random from the pool of stored samples.
         """
+        
+        Plotter.notify_batch() # Notify the plotter that the next data points will correspond to a new batch
 
         if(self.memory.get_usage() > Parameters.AGENT_HISTORY_LENGTH):
             
@@ -159,14 +164,14 @@ class Agent:
         eps = Parameters.INITIAL_EXPLORATION - ((dt / df) * (Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION))
         if random.random() < eps:
             # take a random action
-            action = np.random.randint(0, Parameters.ACTION_SPACE, size=1)[0]
+            action = np.random.randint(0, self.action_space, size=1)[0]
         else:
             # take a smart action
             input_shape = (1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
             dqn_input = self.environment.get_input().reshape(input_shape)
 
             q_values = self.tf_session.run(self.dqn.q_values, {self.dqn_input: dqn_input})
-            # Plotter.add_q_values_at_t(q_values)
+            Plotter.add_q_values_at_t(q_values)
 
             action = self.tf_session.run(self.dqn.smartest_action, {self.dqn_input: dqn_input})
         

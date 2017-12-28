@@ -110,3 +110,9 @@ class Memory:
     
     def get_usage(self):
         return(self.memory_usage)
+
+
+class PrioritizedMemory(Memory):
+    def __init__(self, *args, **kwargs):
+        Memory.__init__(self, *args, **kwargs)
+        #  TODO : after dodo :'( 
