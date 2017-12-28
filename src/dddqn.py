@@ -78,8 +78,8 @@ class DDDQN(DQN):
         sv_stream = tf.contrib.layers.flatten(sv_stream)
 
         # Add one fully connected linear layer per stream
-        W_apa = self.weight_variable([1568, Parameters.ACTION_SPACE])
-        W_sv = self.weight_variable([1568, 1])
+        W_apa = self.weight_variable([1568, Parameters.ACTION_SPACE], method="xavier")
+        W_sv = self.weight_variable([1568, 1], method="xavier")
         fc_apa = tf.matmul(apa_stream, W_apa)
         fc_sv = tf.matmul(sv_stream, W_sv)
         

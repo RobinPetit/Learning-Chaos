@@ -186,12 +186,18 @@ class DQN:
         return(self.mean_error)
 
 
-    def weight_variable(self, shape):
+    def weight_variable(self, shape, method="normal"):
         """
-        Initialize weight variable randomly using a truncated normal distribution
-        of mean = 0 and standard deviation of 0.02
+        Initialize weight variable randomly using one of the two following methods:
+            - A truncated normal distribution of mean = 0 and standard deviation of 0.02
+            - A xavier initialization, where var(W) = 1 / n_in
         """
-        weight_var = tf.truncated_normal(shape, mean = 0, stddev=0.02)
+        assert(method in ["normal", "xavier"])
+        if method == "normal":
+            weight_var = tf.truncated_normal(shape, mean = 0, stddev=0.02)
+        else:
+            xavier_initializer = tf.contrib.layers.xavier_initializer()
+            weight_var = xavier_initializer(list(shape))
         return(tf.Variable(weight_var))
 
 
@@ -235,10 +241,4 @@ class DQN:
         else:
             print("Thou shall only assign learning parameters!")
 
-    
-    def save_learning_parameters(self):
-        print("TODO")
-
-    def load_learning_parameters(self):
-        print("TODO")
 

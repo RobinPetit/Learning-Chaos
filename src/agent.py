@@ -164,7 +164,10 @@ class Agent:
             # take a smart action
             input_shape = (1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
             dqn_input = self.environment.get_input().reshape(input_shape)
-            q_print = self.tf_session.run(self.dqn.q_values, {self.dqn_input: dqn_input})
+
+            q_values = self.tf_session.run(self.dqn.q_values, {self.dqn_input: dqn_input})
+            # Plotter.add_q_values_at_t(q_values)
+
             action = self.tf_session.run(self.dqn.smartest_action, {self.dqn_input: dqn_input})
         
         return(action)
