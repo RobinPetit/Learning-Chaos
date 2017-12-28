@@ -7,6 +7,7 @@ from environment import Environment
 from memory import Memory
 from parameters import Parameters
 from dqn import DQN
+from dddqn import DDDQN
 from os import path, makedirs
 
 import random
@@ -26,7 +27,7 @@ class Agent:
         
         # initialize the DQN and target DQN (with respective placeholders)
         self.dqn_input = tf.placeholder(tf.float32, [None, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH], name = "DQN_input")
-        self.dqn = DQN(self.dqn_input)
+        self.dqn = DDDQN(self.dqn_input)
 
         self.target_dqn_input = tf.placeholder(tf.float32, [None, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH], name = "target_DQN_input")
         self.target_dqn = DQN(self.target_dqn_input)
