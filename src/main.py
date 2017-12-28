@@ -9,7 +9,7 @@ from parameters import Parameters
 
 if __name__ == "__main__":
     
-    Parameters.load("parameters.json")
+    Parameters.load("parameters/dev.json")
     environment = Environment()
     agent = Agent(environment)
     

@@ -1,0 +1,111 @@
+{
+    "desc": "List of hyperparameters retrieved from the original article",
+    "FRAME_SKIPPING": {
+        "desc": "Following previous approaches to playing Atari 2600 games, we also use a simple frame-skipping technique. More precisely, the agent sees and selects actions on every kth frame instead of every frame, and its last action is repeated on skipped frames. Because running the emulator forward for one step requires much less computation than having the agent select an action, this technique allows the agent to play roughly k times more games without significantly increasing the runtime. We use k = 4 for all games.",
+        "value": 4
+    },
+    "IMAGE_WIDTH": {
+        "desc": "Image width",
+        "value": 84
+    },
+    "IMAGE_HEIGHT": {
+        "desc": "Image height",
+        "value": 84
+    },
+    "POSITIVE_REWARD": {
+        "desc": "As the scale of scores varies greatly from game to game, we clipped all positive rewards at 1 and all negative rewards at 21, leaving 0 rewards unchanged. Clipping the rewards in this manner limits the scale of the error derivatives and makes it easier to use the same learning rate across multiple games. At the same time, it could affect the performance of our agent since it cannot differentiate between rewards of different magnitude.",
+        "value": 1
+    },
+    "NO_REWARD": {
+        "desc": "No-reward label",
+        "value": 0
+    },
+    "NEGATIVE_REWARD": {
+        "desc": "Negative-reward label",
+        "value": -1
+    },
+    "MAX_STEPS": {
+        "desc": "Number of steps before to interrupt the learning procedure",
+        "value": 5000  
+    },
+    "FPS": {
+        "desc": "Number of frames per second / frame sampling frequency",
+        "value": 30
+    },
+    "MINIBATCH_SIZE": {
+        "desc": "Number of training cases over which each stochastic gradient descent (SGD) update is computed",
+        "value": 32
+    },
+    "SHORT_TERM_MEMORY_SIZE": {
+        "desc": "Number of experience samples stored in RAM",
+        "value": 200
+    },
+    "LONG_TERM_MEMORY_SIZE": {
+        "desc": "SGD updates are sampled from this number of most recent frames",
+        "value": 5000
+    },
+    "AGENT_HISTORY_LENGTH": {
+        "desc": "The number of most recent frames experienced by the agent that are given as input to the Q network",
+        "value": 4
+    },
+    "TARGET_NETWORK_UPDATE_FREQUENCY": {
+        "desc": "(Default: 10000) The frequency (measured in the number of parameter updates) with which the target network is updated (this corresponds to the parameter C from Algorithm 1)",
+        "value": 10000
+    },
+    "DISCOUNT_FACTOR": {
+        "desc": "Discount factor gamma used in the Q-learning update",
+        "value": 0.99
+    },
+    "ACTION_REPEAT": {
+        "desc": "Repeat each action selected by the agent this many times. Using a value of 4 results in the agent seeing only every 4th input frame",
+        "value": 4
+    },
+    "UPDATE_FREQUENCY": {
+        "desc": "The number of actions selected by the agent between successive SGD updates. Using a value of 4 results in the agent selecting 4 actions between each pair of successive updates",
+        "value": 4
+    },
+    "LEARNING_RATE": {
+        "desc": "The learning rate used by RMSProp",
+        "value": 0.00025
+    },
+    "GRADIENT_MOMENTUM": {
+        "desc": "Gradient momentum used by RMSProp",
+        "value": 0.95
+    },
+    "SQUARED_GRADIENT_MOMENTUM": {
+        "desc": "Squared gradient (denominator) momentum used by RMSProp",
+        "value": 0.95
+    },
+    "MIN_SQUARED_GRADIENT": {
+        "desc": "Constant added to the squared gradient in the denominator of the RMSProp update",
+        "value": 0.01
+    },
+    "INITIAL_EXPLORATION": {
+        "desc": "Initial value of epsilon in epsilon-greedy exploration",
+        "value": 0.5
+    },
+    "FINAL_EXPLORATION": {
+        "desc": "Final value of epsilon in epsilon-greedy exploration",
+        "value": 0.1
+    },
+    "FINAL_EXPLORATION_FRAME": {
+        "desc": "The number of frames over which the initial value of epsilon is linearly annealed to its final value",
+        "value": 1000000
+    },
+    "REPLAY_START_SIZE": {
+        "desc": "(Default: 50.000) A uniform random policy is run for this number of frames before learning starts and the resulting experience is used to populate the replay memory",
+         "value": 100
+    },
+    "NO_OP_MAX": {
+        "desc": "Maximum number of do-nothing actions to be performed by the agent at the start of an episode",
+        "value": 30
+    },
+    "SESSION_SAVE_DIRECTORY": {
+        "desc": "Directory where the TensorFlow session is saved",
+        "value": "./checkpoints/"
+    },
+    "SESSION_SAVE_FILENAME": {
+        "desc": "Name of the file where the TensorFlow session is saved",
+        "value": "model_"
+    }
+}
