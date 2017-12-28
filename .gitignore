@@ -1,3 +1,4 @@
+*.dat
 *.pyc
 *.swp
 .vscode/
