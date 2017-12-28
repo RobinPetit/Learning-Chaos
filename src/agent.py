@@ -4,7 +4,7 @@
 
 from utils import reward_clipper
 from environment import Environment
-from memory import Memory
+from memory import Memory, PrioritizedMemory
 from parameters import Parameters
 from plot import Plotter
 from dqn import DQN
@@ -24,7 +24,7 @@ class Agent:
         
         self.action_space = Parameters.GAMES.get_action_space(Parameters.GAME)
         self.environment = environment
-        self.memory = Memory()
+        self.memory = PrioritizedMemory()
         self.step = 0
         
         # initialize the DQN and target DQN (with respective placeholders)
@@ -32,7 +32,7 @@ class Agent:
         self.dqn = DDDQN(self.dqn_input, self.action_space)
 
         self.target_dqn_input = tf.placeholder(tf.float32, [None, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH], name = "target_DQN_input")
-        self.target_dqn = DQN(self.target_dqn_input, self.action_space)
+        self.target_dqn = DDDQN(self.target_dqn_input, self.action_space)
 
         # initialize the tensorflow session and variables
         self.tf_session = tf.Session()
@@ -93,7 +93,7 @@ class Agent:
                 self.step += 1
                 
                 if self.step % 1000 == 0:
-                        self.save_session()
+                    self.save_session()
         
         self.save_session()
             
@@ -136,7 +136,7 @@ class Agent:
         
         # update agent's memory and environment's history
         self.environment.add_current_screen_to_history()
-        self.memory.add(screen, action, reward_clipper(reward), terminal)
+        self.memory.add(screen, action, reward_clipper(reward), terminal,)
 
         # if we started learning
         if(self.step > Parameters.REPLAY_START_SIZE):
@@ -169,11 +169,10 @@ class Agent:
             # take a smart action
             input_shape = (1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
             dqn_input = self.environment.get_input().reshape(input_shape)
+            action = self.tf_session.run(self.dqn.smartest_action, {self.dqn_input: dqn_input})
 
             q_values = self.tf_session.run(self.dqn.q_values, {self.dqn_input: dqn_input})
             Plotter.add_q_values_at_t(q_values)
-
-            action = self.tf_session.run(self.dqn.smartest_action, {self.dqn_input: dqn_input})
         
         return(action)
 

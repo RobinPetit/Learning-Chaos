@@ -35,6 +35,7 @@ class Memory:
 
 
     def add(self, screen, action, reward, terminal):
+        # q_estimates are not used by the Memory, but by the PrioritizedMemory
 
         self.actions[self.current_memory_index] = action
         self.rewards[self.current_memory_index] = reward
@@ -50,7 +51,7 @@ class Memory:
         state = None
 
         if(not self.memory_usage):
-            print("Memory is empty")
+            print("[Warning] Memory is empty")
         else:
 
             state_index = state_index % self.memory_usage
@@ -113,6 +114,27 @@ class Memory:
 
 
 class PrioritizedMemory(Memory):
-    def __init__(self, *args, **kwargs):
-        Memory.__init__(self, *args, **kwargs)
-        #  TODO : after dodo :'( 
+    """
+    References
+    ----------
+    https://arxiv.org/pdf/1511.05952.pdf
+    Prioritized experience replay
+    Schaul et al.
+    """
+    def __init__(self, alpha=1.0, destination="mem.dat"):
+        """
+        :param alpha: float
+            Degree of prioritization
+            In the case of uniform experience replay, alpha = 0
+        :param destination: str
+            Path to the file where the long-term experience must be stored
+            Note: Files cannot be larger than 2 Gb in 32-bit architectures
+        """
+        Memory.__init__(self, destination=destination)
+        self.alpha = alpha
+        self.priorities = np.full(self.memory_size, fill_value=np.inf, dtype=np.float32)
+
+        # TODO: soon
+
+
+

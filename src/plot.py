@@ -15,6 +15,11 @@ def warn_if_empty(func):
             print("[Warning] Could not save figure in %s: empty sequence" % func.__name__)
     return new_func
 
+def moving_average(sequence, n=100):
+    ma = np.cumsum(sequence)
+    ma[n:] = ma[n:] - ma[:-n]
+    return ma[n-1:] / n
+
 
 class Plotter:
 
@@ -40,7 +45,8 @@ class Plotter:
     @staticmethod
     @warn_if_empty
     def plot_e_scores():
-        plt.plot(Plotter.SCORES_PER_EPISODE)
+        smoothed = moving_average(Plotter.SCORES_PER_EPISODE, n=50)
+        plt.plot(smoothed)
         plt.xlabel("Episode")
         plt.ylabel("Average score per episode")
 
@@ -48,7 +54,8 @@ class Plotter:
     @warn_if_empty
     def plot_q_values():
         avg_q_values = np.asarray(Plotter.Q_VALUES).mean(axis=1)
-        plt.plot(avg_q_values)
+        smoothed = moving_average(avg_q_values)
+        plt.plot(smoothed)
         plt.xlabel("Number of batches")
         plt.ylabel("Average Q-values")
 
@@ -85,6 +92,13 @@ class Plotter:
         q_values_path = os.path.join(folder, "q_values.npy")
         np.save(e_scores_path, np.asarray(Plotter.SCORES_PER_EPISODE))
         np.save(q_values_path, np.asarray(Plotter.Q_VALUES))
+    
+    @staticmethod
+    def reset(folder):
+        for name in os.listdir(folder):
+            filepath = os.path.join(folder, name)
+            if filepath.endswith(".png") or filepath.endswith(".npy"):
+                os.remove(filepath)
         
 
 class EmbeddingProjector:
