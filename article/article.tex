@@ -1,11 +1,14 @@
 \documentclass[letterpaper]{article}
-\usepackage{natbib,alifexi}
+
+\usepackage[utf8]{inputenc}
+\usepackage[sort, colon]{natbib}
+\usepackage{alifexi}
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{commath}
 
-\usepackage{hyperref}
+\usepackage[colorlinks=true,citecolor=blue,linkcolor=blue]{hyperref}
 \usepackage{flushend}
 
 \newcommand\todo[1]{\textcolor{red}{TODO: #1}}
@@ -58,6 +61,10 @@ allows the convolutional layer to capture the local information of the pixels, c
 inspired by the notion of receptive field introduced by Hubel and Wiesel~\citep{Hubel1962}.
 Let $Q(s, a; \theta_i)$ be the Q-value approximation function represented by the neural network, parameterized by its weights $\theta$ at time step $i$.
 
+The huge breakout effect of the DQN was that it has shown to be a first step towards general artificial intelligence~\citep{togelius2015ai}, meaning an
+algorithm that is not only good at learning one particular task but several of them. Even though the DQN needs to be trained for about a million steps
+on each Atari game, it gets good at most of them and better than human at 22 of the 49 experimented~\citep{mnih2015human}.
+
 Since we are handling visual features, we used screen frames as environment state representations. Each frame is a (210 x 160) color image sampled at
 a frequency of 60 Hz. We denote the environment state at current step $t$ by $s_t$. The agent gathers experience by incorporating new experience samples
 to its history. An experience is a tuple $e_t = (s_t, a_t, r_t, s_{t+1})$ appended to the experience history immediately after being generated.
@@ -104,6 +111,12 @@ Then the sample size has been reduced by a factor of three by mapping RGB values
 
 After mapping the three color channels to a unique channel, the number of pixels has also been reduced. Each input image as been rescaled to a
 $84 \times 84$ pixel grid.
+
+The perceived rewards of the agent have all been reduced to be either $-1$ for a negative reward, $0$ for a session with no reward, and $+1$
+for a positive reward, i.e. at any time $t$: $r_t \in \{-1, 0, +1\}$. No intermediate or larger reward is available to the learning algorithm.
+This allows to learn without any previous knowledge on the particular game the DQN is trained on. Yet some rewards can be highly different (in Pac-Man likes,
+eating a cherry gives 100 points, a banana gives 5000, and eating a ghost gives $2^n \times 100$ with $n$ the number of eaten ghosts in a single run).
+This could be improved by adaptive normalization~\citep{van2016learning}.
 
 As estimating the whole $Q^*$ function is practically not performable, $Q^*$ is estimated by a non-linear function depending on $\theta$ such that:
 \begin{equation}
