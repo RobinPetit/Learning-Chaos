@@ -17,20 +17,47 @@ import time
 import numpy as np
 import tensorflow as tf
 
+class RandomAgent:
+    def __init__(self, environment):
+        self.action_space = Parameters.GAMES.get_action_space(Parameters.GAME)
+        self.environment = environment
+
+    def play(self, nb_simulations=500):
+        all_scores = list()
+        score = 0
+        # Player has 3 lives for each game
+        for sim in range(3*nb_simulations):
+            if sim % 3 == 0:
+                print('\r{} out of {}'.format(sim//3, nb_simulations), end='')
+            self.environment.reset()
+            self.environment.terminal = False
+            for t in range(Parameters.MAX_STEPS):
+                action = np.random.randint(0, self.action_space, size=1)[0]
+                _, reward, done = self.environment.process_step(action)
+                score += reward
+                if done:
+                    # Add the score every 3 death
+                    if sim % 3 == 2:
+                        all_scores.append(score+3)
+                        self.environment.reset()
+                        score = 0
+                    break
+        print('')
+        return all_scores
 
 class Agent:
 
     def __init__(self, environment):
-        
+
         self.action_space = Parameters.GAMES.get_action_space(Parameters.GAME)
         self.environment = environment
         self.memory = PrioritizedMemory()
         self.step = 0
-        
-        # select the type of DQN based on Parameters 
+
+        # select the type of DQN based on Parameters
         dqn_type = DDDQN if Parameters.USE_DDDQN else DQN
-        
-        
+
+
         # initialize the DQN and target DQN (with respective placeholders)
         self.dqn_input = tf.placeholder(tf.float32, [None, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH], name = "DQN_input")
         self.dqn = dqn_type(self.dqn_input, self.action_space)
@@ -41,21 +68,21 @@ class Agent:
         # initialize the tensorflow session and variables
         self.tf_session = tf.Session()
         self.load_session()
-        
-    
+
+
     def load_session(self):
         save_file = path.join(Parameters.SESSION_SAVE_DIRECTORY, Parameters.SESSION_SAVE_FILENAME)
         if path.exists(Parameters.SESSION_SAVE_DIRECTORY):
-                # restore from a previously saved session
-                print("Loading session from", save_file)
-                tf_saver = tf.train.Saver()
-                tf_saver.restore(self.tf_session, save_file)
+            # restore from a previously saved session
+            print("Loading session from", save_file)
+            tf_saver = tf.train.Saver()
+            tf_saver.restore(self.tf_session, save_file)
         else:
-                # initialize from scratch
-                print("Loading new session")
-                self.tf_session.run(tf.global_variables_initializer())
-                
-    
+            # initialize from scratch
+            print("Loading new session")
+            self.tf_session.run(tf.global_variables_initializer())
+
+
     def save_session(self):
         save_file = path.join(Parameters.SESSION_SAVE_DIRECTORY, Parameters.SESSION_SAVE_FILENAME)
         if not path.exists(Parameters.SESSION_SAVE_DIRECTORY):
@@ -75,13 +102,13 @@ class Agent:
             self.environment.render(mode='human')
             self.environment.terminal = False
             for t in range(Parameters.MAX_STEPS):
-                
+
                 # select an action
                 action = self.select_action()
-                
+
                 # process step
                 state, reward, terminal = self.environment.process_step(action)
-                
+
                 # observe the consequence of the action
                 self.observe(state, action, reward, terminal)
 
@@ -93,26 +120,26 @@ class Agent:
                     time.sleep(1.0 / Parameters.FPS) # Wait one step
 
                 self.environment.render()
-                
+
                 self.step += 1
-                
+
                 if self.step % 1000 == 0:
                     self.save_session()
-        
-        self.save_session()
-            
 
-    
+        self.save_session()
+
+
+
     def batch_q_learning(self):
         """
         Apply Q-learning updates, or minibatch updates, to samples of experience,
         (s, a, r, s') ~ U(D), drawn at random from the pool of stored samples.
         """
-        
+
         Plotter.notify_batch() # Notify the plotter that the next data points will correspond to a new batch
 
         if(self.memory.get_usage() > Parameters.AGENT_HISTORY_LENGTH):
-            
+
             state_t, action, reward, state_t_plus_1, terminal = self.memory.bring_back_memories()
 
             q_t_plus_1 = self.tf_session.run(self.target_dqn.q_values, {self.target_dqn_input: state_t_plus_1})
@@ -130,14 +157,14 @@ class Agent:
 
     def observe(self, screen, action, reward, terminal):
         """
-        [Article] The agent observes an image from the emulator, 
-        which is a vector of pixel values representing the current screen. 
-        In addition it receives a reward representing the change in game score. 
+        [Article] The agent observes an image from the emulator,
+        which is a vector of pixel values representing the current screen.
+        In addition it receives a reward representing the change in game score.
 
         Updates the environment's history and agent's memory and performs an SGD update
-        and/or updates the Target DQN 
+        and/or updates the Target DQN
         """
-        
+
         # update agent's memory and environment's history
         self.environment.add_current_screen_to_history()
         self.memory.add(screen, action, reward_clipper(reward), terminal,)
@@ -148,11 +175,11 @@ class Agent:
             # Perform SGD updates at frequency [Parameters.UPDATE_FREQUENCY]
             if(not(self.step % Parameters.UPDATE_FREQUENCY)):
                 self.batch_q_learning()
-            
+
             # Update Target DQN at frequency [Parameters.TARGET_NETWORK_UPDATE_FREQUENCY]
             if(not(self.step % Parameters.TARGET_NETWORK_UPDATE_FREQUENCY)):
                 self.update_target_dqn()
-            
+
 
 
     def select_action(self):
@@ -177,7 +204,7 @@ class Agent:
 
             q_values = self.tf_session.run(self.dqn.q_values, {self.dqn_input: dqn_input})
             Plotter.add_q_values_at_t(q_values)
-        
+
         return(action)
 
 
@@ -194,10 +221,10 @@ class Agent:
             else:
                 print("Impossible to set value: None")
 
-    
+
     def play(self):
         print("To do")
 
-    
 
-        
+
+
