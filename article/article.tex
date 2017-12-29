@@ -177,6 +177,12 @@ The $\hat Q$ target action-value network is then copied back from the action val
 
   \todo{Plots avec les erreurs d'apprentissage (pas de cross-val)}
 
+Figure~\ref{fig:t-SNE}\todo{Link the right figure} shows a 2-dimensional representation of the last fully connected hidden layer, i.e. a 512-dimensional
+vector. The method of \textit{projection} that was used is t-SNE~\citep{maaten2008visualizing}, which is part of the manifold learning algorithms, also
+called \textit{Nonlinear Dimensionality Reduction}~\citep{lee2007nonlinear}.
+
+The implementation of t-SNE that was used is the one from Scikit-Learn~\citep{scikit-learn}, the Python library.
+
   \todo{Magnifique plot T-SNE avec des couleurs et des gifs et des trucs qui font beep et qui font boop}~\citep{wattenberg2016how}
 
 \section{Discussion}
@@ -187,7 +193,7 @@ The $\hat Q$ target action-value network is then copied back from the action val
 
   \todo{Remercier Lenaerts, Nowe, Google, OpenAI, Markov}
 
-%\newpage
+\newpage
 \footnotesize
 \bibliographystyle{apalike}
 \bibliography{article}
