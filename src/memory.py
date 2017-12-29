@@ -5,10 +5,13 @@
 from parameters import Parameters
 import numpy as np
 
+import os
+
+DEFAULT_PATH = "mem.dat"
 
 class Memory:
 
-    def __init__(self, destination="mem.dat"):
+    def __init__(self, destination=DEFAULT_PATH):
         """
         :param destination: str
             Path to the file where the long-term experience must be stored
@@ -45,7 +48,7 @@ class Memory:
         self.memory_usage = max(self.memory_usage, self.current_memory_index + 1)
         self.current_memory_index = (self.current_memory_index + 1) % self.memory_size
 
-    
+
     def get_state(self, state_index):
 
         state = None
@@ -61,13 +64,13 @@ class Memory:
             else:
                 # negative indices don't work well with slices in numpy..
                 state = self.screens[np.array([(state_index-i) % self.memory_usage for i in reversed(range(Parameters.AGENT_HISTORY_LENGTH))]), ...]
-                
+
         state = np.swapaxes(state, 0, 1)
         state = np.swapaxes(state, 1, 2)
 
         return(state)
-        
-    
+
+
     def bring_back_memories(self):
         """
         [Article] our algorithm only stores the last N experience tuples in the replay
@@ -83,23 +86,23 @@ class Memory:
         Memories that contain either a terminal or the self.current_memory_index are not selected
         """
         assert(self.memory_usage > Parameters.AGENT_HISTORY_LENGTH)
-            
+
         selected_memories = []
 
         while(len(selected_memories) < self.minibatch_size):
 
             memory = np.random.randint(Parameters.AGENT_HISTORY_LENGTH, self.memory_usage)
-            
+
             if(not self.includes_terminal(memory) and not self.includes_current_memory_index(memory)):
                 self.state_t[len(selected_memories), ...] = self.get_state(memory-1)
                 self.state_t_plus_1[len(selected_memories), ...] = self.get_state(memory)
                 selected_memories.append(memory)
-        
+
         # for compatibility issues
         selected_memories = np.array(selected_memories)
-        
+
         return(self.state_t, self.actions[selected_memories], self.rewards[selected_memories], self.state_t_plus_1, self.terminals[selected_memories])
-        
+
 
     def includes_terminal(self, index):
         return(np.any(self.terminals[(index - Parameters.AGENT_HISTORY_LENGTH):index]))
@@ -108,9 +111,15 @@ class Memory:
     def includes_current_memory_index(self, index):
         return((index >= self.current_memory_index) and (index - Parameters.AGENT_HISTORY_LENGTH < self.current_memory_index))
 
-    
+
     def get_usage(self):
         return(self.memory_usage)
+
+
+    @staticmethod
+    def reset(path=DEFAULT_PATH):
+        if os.path.exists(path):
+            os.remove(path)
 
 
 class PrioritizedMemory(Memory):

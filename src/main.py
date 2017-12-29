@@ -6,6 +6,7 @@ from plot import Plotter
 from agent import Agent, RandomAgent
 from environment import Environment
 from parameters import Parameters
+from memory import Memory
 
 import argparse
 
@@ -46,6 +47,7 @@ if __name__ == "__main__":
         plot_figures()
     elif args.reset_plot:
         Plotter.reset(OUT_FOLDER)
-        print("Training results deleted from folder %s" % OUT_FOLDER)
+        Memory.reset()
+        print("Training results deleted from folder %s and Memory was removed from root." % OUT_FOLDER)
     elif args.random:
         play_random()

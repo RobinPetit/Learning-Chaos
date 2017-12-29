@@ -12,14 +12,14 @@ class Parameters:
     # environment settings
     GAMES = Games()
     GAME = GAMES.SPACE_INVADERS
-    DISPLAY = True
+    DISPLAY = False
     SLEEP_BETWEEN_STEPS = False
     USE_DDDQN = False
 
     @staticmethod
     def add_attr(name, value):
         """ Statically adds a parameter as an attribute
-        to class Parameters. All new Parameters atributes
+        to class Parameters. All new Parameters attributes
         are in capital letters.
 
         :param name: str
