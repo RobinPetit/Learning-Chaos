@@ -27,12 +27,16 @@ class Agent:
         self.memory = PrioritizedMemory()
         self.step = 0
         
+        # select the type of DQN based on Parameters 
+        dqn_type = DDDQN if Parameters.USE_DDDQN else DQN
+        
+        
         # initialize the DQN and target DQN (with respective placeholders)
         self.dqn_input = tf.placeholder(tf.float32, [None, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH], name = "DQN_input")
-        self.dqn = DDDQN(self.dqn_input, self.action_space)
+        self.dqn = dqn_type(self.dqn_input, self.action_space)
 
         self.target_dqn_input = tf.placeholder(tf.float32, [None, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH], name = "target_DQN_input")
-        self.target_dqn = DDDQN(self.target_dqn_input, self.action_space)
+        self.target_dqn = dqn_type(self.target_dqn_input, self.action_space)
 
         # initialize the tensorflow session and variables
         self.tf_session = tf.Session()
