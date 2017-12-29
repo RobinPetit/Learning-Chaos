@@ -29,7 +29,7 @@ def play_random():
     Parameters.load("parameters/dev.json")
     environment = Environment()
     agent = RandomAgent(environment)
-    all_scores = agent.play(500)
+    all_scores = agent.play()
     print('mean: ', np.mean(all_scores), '\tstd: ', np.std(all_scores))
 
 if __name__ == "__main__":

@@ -25,23 +25,18 @@ class RandomAgent:
     def play(self, nb_simulations=500):
         all_scores = list()
         score = 0
-        # Player has 3 lives for each game
-        for sim in range(3*nb_simulations):
-            if sim % 3 == 0:
-                print('\r{} out of {}'.format(sim//3, nb_simulations), end='')
+        for sim in range(nb_simulations):
+            print('\r{} out of {}'.format(sim+1, nb_simulations), end='')
             self.environment.reset()
             self.environment.terminal = False
-            for t in range(Parameters.MAX_STEPS):
+            while self.environment.get_lives() > 0:
                 action = np.random.randint(0, self.action_space, size=1)[0]
                 _, reward, done = self.environment.process_step(action)
                 score += reward
                 if done:
-                    # Add the score every 3 death
-                    if sim % 3 == 2:
-                        all_scores.append(score+3)
-                        self.environment.reset()
-                        score = 0
-                    break
+                    self.environment.terminal = False
+            all_scores.append(score)
+            score = 0
         print('')
         return all_scores
 
