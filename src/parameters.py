@@ -11,7 +11,6 @@ class Parameters:
 
     # environment settings
     GAMES = Games()
-    #GAME = GAMES.SPACE_INVADERS
     DISPLAY = False
     SLEEP_BETWEEN_STEPS = False
     USE_DDDQN = False
