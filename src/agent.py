@@ -72,6 +72,7 @@ class Agent:
             print("Loading session from", save_file)
             tf_saver = tf.train.Saver()
             tf_saver.restore(self.tf_session, save_file)
+            self.step = Parameters.CURRENT_STEP
         else:
             # initialize from scratch
             print("Loading new session")
@@ -79,6 +80,8 @@ class Agent:
 
 
     def save_session(self):
+        Parameters.CURRENT_STEP = self.step
+        Parameters.update()
         save_file = path.join(Parameters.SESSION_SAVE_DIRECTORY, Parameters.SESSION_SAVE_FILENAME)
         if not path.exists(Parameters.SESSION_SAVE_DIRECTORY):
                 makedirs(Parameters.SESSION_SAVE_DIRECTORY)
@@ -89,8 +92,6 @@ class Agent:
 
 
     def train(self):
-
-        self.step = 0
 
         while(self.step < Parameters.MAX_STEPS):
 
