@@ -16,6 +16,9 @@ class DQN:
         # receiving state placeholder
         self.state = state
 
+        # creating importance-sampling weights placeholder
+        self.i_s_weights = tf.placeholder(tf.float32, [None], name="i_s_weights")
+
         # set action space size
         self.action_space = action_space
 
@@ -147,15 +150,11 @@ class DQN:
                                                     momentum = Parameters.GRADIENT_MOMENTUM,
                                                     epsilon = Parameters.MIN_SQUARED_GRADIENT )
         
-        return(self.optimizer.minimize(self.error))
-
+        return(self.optimizer.minimize(self.importance_weighted_error))
 
     @define_scope
-    def error(self):
-        """
-        Return the mean (clipped) error 
-        """
-        
+    def errors(self):
+        """ Return the clipped errors """
         # placeholders for the target network q values and the action
         self.target_q = tf.placeholder(tf.float32, [None], name="target_q")
         self.action = tf.placeholder(tf.int64, [None], name="action")
@@ -183,11 +182,20 @@ class DQN:
         self.clipped_error = tf_array_ops.where(tf.abs(self.delta) < 1.0, 
                                                 tf.square(self.delta) * 0.5,
                                                 tf.abs(self.delta) - 0.5)
-        
-        self.mean_error = tf.reduce_mean(self.clipped_error, name="mean_error")
-        
+        return(self.clipped_error)
+
+    @define_scope
+    def error(self):
+        """ Return the mean (clipped) error """
+        self.mean_error = tf.reduce_mean(self.errors, name="mean_error")
         return(self.mean_error)
 
+    @define_scope
+    def importance_weighted_error(self):
+        """ Return the importance-weighted error for prioritized memory updates """
+        weighted_errors = self.i_s_weights * self.errors
+        self.mean_error = tf.reduce_mean(weighted_errors, name="mean_error")
+        return(self.mean_error)
 
     def weight_variable(self, shape, method="normal"):
         """

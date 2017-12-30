@@ -13,7 +13,7 @@ from dddqn import DDDQN
 from os import path, makedirs
 import random
 import time
-
+import sys
 import numpy as np
 import tensorflow as tf
 
@@ -26,7 +26,7 @@ class RandomAgent:
         all_scores = list()
         score = 0
         for sim in range(nb_simulations):
-            print('\r{} out of {}'.format(sim+1, nb_simulations), end='')
+            sys.stdout.write('\r{} out of {}'.format(sim+1, nb_simulations))
             self.environment.reset()
             self.environment.terminal = False
             while self.environment.get_lives() > 0:
@@ -46,7 +46,7 @@ class Agent:
 
         self.action_space = Parameters.GAMES.get_action_space(Parameters.GAME)
         self.environment = environment
-        self.memory = PrioritizedMemory()
+        self.memory = PrioritizedMemory(self.action_space)
         self.step = 0
 
         # select the type of DQN based on Parameters
@@ -135,19 +135,22 @@ class Agent:
 
         if(self.memory.get_usage() > Parameters.AGENT_HISTORY_LENGTH):
 
-            state_t, action, reward, state_t_plus_1, terminal = self.memory.bring_back_memories()
+            state_t, action, reward, state_t_plus_1, terminal, i_s_weights, memory_indices = self.memory.bring_back_memories()
 
             q_t_plus_1 = self.tf_session.run(self.target_dqn.q_values, {self.target_dqn_input: state_t_plus_1})
             max_q_t_plus_1 = np.max(q_t_plus_1, axis=1)
 
             target_q_t = (1. - terminal) * Parameters.DISCOUNT_FACTOR * max_q_t_plus_1 + reward
 
-            _, q_t, loss = self.tf_session.run([self.dqn.optimize, self.dqn.q_values, self.dqn.error],
+            _, q_t, losses = self.tf_session.run([self.dqn.optimize, self.dqn.q_values, self.dqn.errors],
             {
                 self.dqn.target_q : target_q_t,
                 self.dqn.action : action,
-                self.dqn_input : state_t
+                self.dqn_input : state_t,
+                self.dqn.i_s_weights : i_s_weights
             })
+
+            self.memory.update(memory_indices, np.squeeze(q_t), losses, self.get_learning_completion())
 
 
     def observe(self, screen, action, reward, terminal):
@@ -175,7 +178,14 @@ class Agent:
             if(not(self.step % Parameters.TARGET_NETWORK_UPDATE_FREQUENCY)):
                 self.update_target_dqn()
 
-
+    def get_learning_completion(self):
+        """
+        Returns the number of performed learning steps divided by the maximum number of steps
+        """
+        dt_final = Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION
+        dt = float(self.step - Parameters.REPLAY_START_SIZE)
+        df = float(Parameters.FINAL_EXPLORATION_FRAME - Parameters.REPLAY_START_SIZE)
+        return (dt / df)
 
     def select_action(self):
         """
@@ -184,10 +194,8 @@ class Agent:
         """
 
         # compute epsilon at step t
-        dt_final = Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION
-        dt = self.step - Parameters.REPLAY_START_SIZE
-        df = Parameters.FINAL_EXPLORATION_FRAME - Parameters.REPLAY_START_SIZE
-        eps = Parameters.INITIAL_EXPLORATION - ((dt / df) * (Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION))
+        completion = self.get_learning_completion()
+        eps = Parameters.INITIAL_EXPLORATION - (completion * (Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION))
         if random.random() < eps:
             # take a random action
             action = np.random.randint(0, self.action_space, size=1)[0]
