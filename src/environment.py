@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-# environment.py 
+# environment.py
 # author : Robin Petit, Stanislas Gueniffey, Cedric Simar, Antoine Passemiers
 
 from history import FramesHistory
 from parameters import Parameters
+from plot import Plotter
 import utils
 
 import gym
@@ -28,7 +29,7 @@ class Environment:
             for screen in self.history.get():
                 plt.imshow(screen, cmap='gray')
                 plt.show()
-        
+
 
     def new_game(self):
         """
@@ -40,12 +41,13 @@ class Environment:
         self.take_action(first_action)
         self.render()
         self.reward = 0
-        self.terminal = False # True? -> Parameter ?
+        self.episode_score = 0
+        self.terminal = False
 
         self.initialize_screens_history()
 
         return(self.screen, first_action, self.reward, self.terminal)
-    
+
 
     def initialize_screens_history(self):
 
@@ -55,18 +57,18 @@ class Environment:
         for _ in range(Parameters.AGENT_HISTORY_LENGTH):
             self.history.add_frame(self.screen)
 
-    
+
     def add_current_screen_to_history(self):
         self.history.add_frame(self.screen)
 
-    
+
     def get_input(self):
         return(self.history.get())
 
 
     def select_random_action(self):
         return(self.environment.action_space.sample())
-    
+
 
     def select_smart_action(self):
         """
@@ -81,7 +83,7 @@ class Environment:
         self.lives = info["ale.lives"]
 
 
-    
+
     def process_step(self, action):
 
         """
@@ -89,16 +91,17 @@ class Environment:
         as described in the article
         Return the environment state after taking the action x times
         """
-        
+
         lives_before_action = self.lives
         cumulated_reward = Parameters.NO_REWARD
 
         # frame skipping (see Parameters for more information)
         skipped = 0 # break is evil
         while(skipped < Parameters.FRAME_SKIPPING and not self.terminal):
-            
+
             self.take_action(action)
             cumulated_reward += self.reward
+            self.episode_score += self.reward
 
             """
             [Article] For games where there is a life counter, the Atari
@@ -108,24 +111,27 @@ class Environment:
             if self.lives < lives_before_action:
                 cumulated_reward += Parameters.NEGATIVE_REWARD
                 self.terminal = True
-            
+
+                Plotter.add_episode_score(self.episode_score)
+                self.episode_score = 0
+
             skipped += 1
 
         self.reward = cumulated_reward
 
         return(self.state, self.reward, self.terminal)
-    
-    
+
+
     @property
     def screen(self):
         return(utils.preprocess_img(self._previous_screen, self._screen))
 
-    
+
     @property
     def state(self):
         return(self.screen)
 
-    
+
     def render(self, mode="human"):
         """
         Display the game on screen only if the display parameter is True
@@ -136,9 +142,17 @@ class Environment:
 
     def reset(self):
         """
-        Reset the environment only if the number of lives is
+        Reset the environment only if the number of lives is 0
         """
         if(not self.lives):
             self.environment.reset()
+            self.lives = np.inf
 
-            
+
+    def get_lives(self):
+        """
+        Send the number of lives of the player in the game
+        """
+        return self.lives
+
+

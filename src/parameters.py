@@ -11,15 +11,22 @@ class Parameters:
 
     # environment settings
     GAMES = Games()
-    GAME = GAMES.SPACE_INVADERS
-    ACTION_SPACE = GAMES.get_action_space(GAME)
-    DISPLAY = True
+    GAME = "SpaceInvaders-v0"
+    DISPLAY = False
     SLEEP_BETWEEN_STEPS = False
+
+    USE_DDDQN = False
+    USE_PRIORITIZATION = False
+
+    LOADED_FILE = None
+
+    TO_UPDATE = None
+    CURRENT_STEP = 0
 
     @staticmethod
     def add_attr(name, value):
         """ Statically adds a parameter as an attribute
-        to class Parameters. All new Parameters atributes
+        to class Parameters. All new Parameters attributes
         are in capital letters.
 
         :param name: str
@@ -30,6 +37,9 @@ class Parameters:
         name = name.upper()
         setattr(Parameters, name, value)
 
+    def get_attr(name):
+        return getattr(Parameters, name.upper())
+
     @staticmethod
     def load(filepath):
         """ Statically loads the hyper-parameters from a json file
@@ -37,11 +47,32 @@ class Parameters:
         :param filepath: str
             Path to the json parameter file
         """
+        Parameters.LOADED_FILE = filepath
+        Parameters.TO_UPDATE = list()
         with open(filepath, "r") as f:
             data = json.load(f)
-            for key in data.keys():
-                if type(data[key]) == dict:
+            for key in sorted(data.keys()):
+                if type(data[key]) is dict:
                     if key in ("SESSION_SAVE_FILENAME", "SESSION_SAVE_DIRECTORY"):
                         # make session path specific to the game being played
                         data[key]["value"] = data[key]["value"] + Parameters.GAME
+                    elif key == "GAME":
+                        data[key]["value"] = eval('Parameters.GAMES.' + data[key]["value"])
                     Parameters.add_attr(key, data[key]["value"])
+                    if "update" in data[key] and data[key]["update"]:
+                        Parameters.TO_UPDATE.append(key)
+
+    @staticmethod
+    def update():
+        if Parameters.LOADED_FILE is None:
+            print('[Warning] Trying to save parameters but none have been loaded.')
+            return
+        with open(Parameters.LOADED_FILE, "r") as f:
+            data = json.load(f)
+            for key in data:
+                if type(data[key]) is not dict or key not in Parameters.TO_UPDATE:
+                    continue
+                if data[key]['value'] != Parameters.get_attr(key):
+                    data[key]["value"] = Parameters.get_attr(key)
+        with open(Parameters.LOADED_FILE, "w") as f:
+            json.dump(data, f)
