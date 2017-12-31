@@ -62,6 +62,7 @@ class Agent:
 
         # initialize the tensorflow session and variables
         self.tf_session = tf.Session()
+        self.tf_saver = tf.train.Saver()
         self.load_session()
 
 
@@ -70,8 +71,7 @@ class Agent:
         if path.exists(Parameters.SESSION_SAVE_DIRECTORY):
             # restore from a previously saved session
             print("Loading session from", save_file)
-            tf_saver = tf.train.Saver()
-            tf_saver.restore(self.tf_session, save_file)
+            self.tf_saver.restore(self.tf_session, save_file)
             self.step = Parameters.CURRENT_STEP
         else:
             # initialize from scratch
@@ -85,8 +85,7 @@ class Agent:
         save_file = path.join(Parameters.SESSION_SAVE_DIRECTORY, Parameters.SESSION_SAVE_FILENAME)
         if not path.exists(Parameters.SESSION_SAVE_DIRECTORY):
                 makedirs(Parameters.SESSION_SAVE_DIRECTORY)
-        tf_saver = tf.train.Saver()
-        tf_saver.save(self.tf_session, save_file)
+        self.tf_saver.save(self.tf_session, save_file)
         Plotter.save("out")
         print("Saved session to", save_file)
 
