@@ -7,7 +7,7 @@ import gym
 
 class Games:
 
-    def __init__(self):   
+    def __init__(self):
 
         self.ASTEROIDS = "Asteroids-v0"
         self.PONG = "Pong-v0"
@@ -18,7 +18,7 @@ class Games:
         self.action_space = {}
 
     def define_action_spaces(self):
-        
+
         for game in self.available_games_list:
             dummy_env = gym.envs.make(game)
             self.action_space[game] = dummy_env.action_space.shape[0]
@@ -33,4 +33,4 @@ class Games:
             self.define_action_spaces()
         return(self.action_space[game])
 
-        
+

@@ -1,5 +1,9 @@
 {
     "desc": "List of hyperparameters retrieved from the original article",
+    "GAME": {
+        "desc": "Name of the game that is going to be played",
+        "value": "SPACE_INVADERS"
+    },
     "FRAME_SKIPPING": {
         "desc": "Following previous approaches to playing Atari 2600 games, we also use a simple frame-skipping technique. More precisely, the agent sees and selects actions on every kth frame instead of every frame, and its last action is repeated on skipped frames. Because running the emulator forward for one step requires much less computation than having the agent select an action, this technique allows the agent to play roughly k times more games without significantly increasing the runtime. We use k = 4 for all games.",
         "value": 4
@@ -107,5 +111,10 @@
     "SESSION_SAVE_FILENAME": {
         "desc": "Name of the file where the TensorFlow session is saved",
         "value": "model_"
+    },
+    "CURRENT_STEP": {
+        "desc": "Step from which the game has to start",
+        "value": 0,
+        "update": true
     }
 }
