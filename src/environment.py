@@ -11,7 +11,7 @@ import gym
 from gym.envs.atari.atari_env import AtariEnv
 
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 
 class Environment:

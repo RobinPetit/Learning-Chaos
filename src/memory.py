@@ -37,14 +37,13 @@ class Memory:
         self.memory_size = Parameters.LONG_TERM_MEMORY_SIZE
 
         screens_shape = (self.memory_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH)
-        self.screens = np.memmap(self.memory_filepath, mode="w+", shape=screens_shape, dtype=np.float16)
         self.minibatch_size = Parameters.MINIBATCH_SIZE
         self.state_shape = (self.minibatch_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
         self.load_memory()
+        self.screens = np.memmap(self.memory_filepath, mode="w+", shape=screens_shape, dtype=np.float16)
 
 
     def save_memory(self, path=DEFAULT_SAVE_PATH):
-        print('saving memory')
         with shelve.open(path) as shelf:
             shelf["idx"] = self.current_memory_index
             shelf["mem usage"] = self.memory_usage
@@ -68,6 +67,11 @@ class Memory:
             self.state_t = np.empty(self.state_shape, dtype=np.float16)
             self.state_t_plus_1 = np.empty(self.state_shape, dtype=np.float16)
             print('Created new memory')
+            try:
+                os.remove(self.memory_filepath)
+                os.remove(self.memory_filepath+'.bak')
+            except FileNotFoundError:
+                pass
         else:
             move(self.memory_filepath+'.bak', self.memory_filepath)
             with shelve.open(path) as shelf:

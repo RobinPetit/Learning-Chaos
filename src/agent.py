@@ -64,6 +64,7 @@ class Agent:
         self.tf_session = tf.Session()
         self.tf_saver = tf.train.Saver()
         self.load_session()
+        self.last_time = time.time()
 
 
     def load_session(self):
@@ -80,15 +81,36 @@ class Agent:
 
 
     def save_session(self):
+        time_at_start_save = time.time()
+        print('[Step {}  --  Took {:3.2f} s]'.format(self.step, time_at_start_save - self.last_time), end='\t')
+        self.last_time = time_at_start_save
+
         Parameters.CURRENT_STEP = self.step
+        a = time.time()
         Parameters.update()
+        b = time.time()
+        print('[{:3.2f}s for json]'.format(b-a), end='\t')
+
         save_file = path.join(Parameters.SESSION_SAVE_DIRECTORY, Parameters.SESSION_SAVE_FILENAME)
         if not path.exists(Parameters.SESSION_SAVE_DIRECTORY):
                 makedirs(Parameters.SESSION_SAVE_DIRECTORY)
+        a = time.time()
         self.tf_saver.save(self.tf_session, save_file)
+        b = time.time()
+        print('[{:3.2f}s for tf]'.format(b-a), end='\t')
+
+        a = time.time()
         Plotter.save("out")
+        b = time.time()
+        print('[{:3.2f}s for Plotter]'.format(b-a), end='\t')
+        a = time.time()
         self.memory.save_memory()
-        print("Saved session to", save_file)
+        b = time.time()
+        print('[{:3.2f}s for memory]'.format(b-a), end='\t')
+        post_save_time = time.time()
+        print('[Required {:3.2f}s to save all]'.format(post_save_time-time_at_start_save), end='\t')
+        self.last_time = post_save_time
+        print("Saved session")
 
 
     def train(self):
