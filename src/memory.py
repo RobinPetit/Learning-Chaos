@@ -25,11 +25,14 @@ class ShortTermMemory:
 
 class Memory:
 
-    def __init__(self, destination=DEFAULT_MEMMAP_PATH):
+    def __init__(self, destination=DEFAULT_MEMMAP_PATH, load=True):
         """
         :param destination: str
             Path to the file where the long-term experience must be stored
             Note: Files cannot be larger than 2 Gb in 32-bit architectures
+        :param load: bool
+            True by default. Should be False only when called by child class
+            that call load_memory on its own!
         """
 
         self.memory_filepath = destination
@@ -37,10 +40,11 @@ class Memory:
         self.memory_size = Parameters.LONG_TERM_MEMORY_SIZE
 
         screens_shape = (self.memory_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH)
+        self.screens = np.memmap(self.memory_filepath, mode="w+", shape=screens_shape, dtype=np.float16)
         self.minibatch_size = Parameters.MINIBATCH_SIZE
         self.state_shape = (self.minibatch_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
-        self.load_memory()
-        self.screens = np.memmap(self.memory_filepath, mode="w+", shape=screens_shape, dtype=np.float16)
+        if load:
+            self.load_memory()
 
 
     def save_memory(self, path=DEFAULT_SAVE_PATH):
@@ -53,12 +57,11 @@ class Memory:
             shelf["state t"] = self.state_t
             shelf["state t+1"] = self.state_t_plus_1
         self.screens.flush()
-        # Is it really a good idea to copy a file that is that big? Probably not. Meh
-        copyfile(self.memory_filepath, self.memory_filepath+'.bak')
 
 
     def load_memory(self, path=DEFAULT_SAVE_PATH):
-        if not os.path.exists(path):
+        ret = os.path.exists(path)
+        if not ret:
             self.current_memory_index = 0
             self.memory_usage = 0
             self.actions = np.empty(self.memory_size, dtype=np.uint8)
@@ -71,9 +74,8 @@ class Memory:
                 os.remove(self.memory_filepath)
                 os.remove(self.memory_filepath+'.bak')
             except FileNotFoundError:
-                pass
+                pass  # remove files if they exist so if they don't exist, just ignore
         else:
-            move(self.memory_filepath+'.bak', self.memory_filepath)
             with shelve.open(path) as shelf:
                 self.current_memory_index = shelf["idx"]
                 self.memory_usage = shelf["mem usage"]
@@ -83,6 +85,7 @@ class Memory:
                 self.state_t = shelf["state t"]
                 self.state_t_plus_1 = shelf["state t+1"]
             print('Loaded memory from', path)
+        return ret
 
 
     def add(self, screen, action, reward, terminal):
@@ -211,14 +214,35 @@ class PrioritizedMemory(Memory):
             Path to the file where the long-term experience must be stored
             Note: Files cannot be larger than 2 Gb in 32-bit architectures
         """
-        Memory.__init__(self, destination=destination)
+        Memory.__init__(self, destination=destination, load=False)
         self.alpha = alpha
         self.beta = self.beta_0 = beta_0
         self.epsilon = epsilon
         self.p_0 = p_0
-        self.priorities = np.full(self.memory_size, fill_value=self.p_0, dtype=np.float32)
-        self.sampling_probs = np.ones(self.memory_size, dtype=np.float64)
-        self.i_s_weights = np.ones(self.memory_size, dtype=np.float64)
+        self.load_memory()
+
+
+    def save_memory(self, path=DEFAULT_SAVE_PATH):
+        super.save_memory(path)
+        with shelve.open(path) as shelf:
+            shelf["priorities"] = self.priorities
+            shelf["sampling"] = self.sampling_probs
+            shelf["weights"] = self.i_s_weights
+
+
+    def load_memory(self, path=DEFAULT_SAVE_PATH):
+        ret = super.load_memory(path)
+        if not ret:
+            self.priorities = np.full(self.memory_size, fill_value=self.p_0, dtype=np.float32)
+            self.sampling_probs = np.ones(self.memory_size, dtype=np.float64)
+            self.i_s_weights = np.ones(self.memory_size, dtype=np.float64)
+        else:
+            with shelve.open(path) as shelf:
+                self.priorities = shelf["priorities"]
+                self.sampling_probs = shelf["sampling"]
+                self.i_s_weights = shelf["weights"]
+        return ret
+
 
     def sample_memory(self):
         self.update_probs_and_weights()

@@ -141,7 +141,7 @@ class Agent:
 
                 self.step += 1
 
-                if self.step % 100 == 0:
+                if self.step % 1000 == 0:
                     self.save_session()
 
         self.save_session()
