@@ -223,7 +223,7 @@ class PrioritizedMemory(Memory):
 
 
     def save_memory(self, path=DEFAULT_SAVE_PATH):
-        super.save_memory(path)
+        Memory.save_memory(self, path)
         with shelve.open(path) as shelf:
             shelf["priorities"] = self.priorities
             shelf["sampling"] = self.sampling_probs
@@ -231,7 +231,7 @@ class PrioritizedMemory(Memory):
 
 
     def load_memory(self, path=DEFAULT_SAVE_PATH):
-        ret = super.load_memory(path)
+        ret = Memory.load_memory(self, path)
         if not ret:
             self.priorities = np.full(self.memory_size, fill_value=self.p_0, dtype=np.float32)
             self.sampling_probs = np.ones(self.memory_size, dtype=np.float64)
