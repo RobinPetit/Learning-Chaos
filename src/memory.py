@@ -6,12 +6,14 @@ from parameters import Parameters
 import numpy as np
 
 import os
+from shutil import copyfile, move
+import shelve
 
-DEFAULT_PATH = "mem.dat"
-
+DEFAULT_MEMMAP_PATH = "mem.dat"
+DEFAULT_SAVE_PATH = "memory-" + Parameters.GAME + '.shelf'
 
 class ShortTermMemory:
-   
+
     def __init__(self, mmap):
         """
         :param mmap: np.memmap
@@ -23,7 +25,7 @@ class ShortTermMemory:
 
 class Memory:
 
-    def __init__(self, destination=DEFAULT_PATH):
+    def __init__(self, destination=DEFAULT_MEMMAP_PATH):
         """
         :param destination: str
             Path to the file where the long-term experience must be stored
@@ -33,20 +35,50 @@ class Memory:
         self.memory_filepath = destination
 
         self.memory_size = Parameters.LONG_TERM_MEMORY_SIZE
-        self.current_memory_index = 0
-        self.memory_usage = 0
 
-        self.actions = np.empty(self.memory_size, dtype=np.uint8)
-        self.rewards = np.empty(self.memory_size, dtype=np.integer)
         screens_shape = (self.memory_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH)
         self.screens = np.memmap(self.memory_filepath, mode="w+", shape=screens_shape, dtype=np.float16)
-        self.terminals = np.empty(self.memory_size, dtype=np.bool)
-
         self.minibatch_size = Parameters.MINIBATCH_SIZE
+        self.state_shape = (self.minibatch_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
+        self.load_memory()
 
-        state_shape = (self.minibatch_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
-        self.state_t = np.empty(state_shape, dtype=np.float16)
-        self.state_t_plus_1 = np.empty(state_shape, dtype=np.float16)
+
+    def save_memory(self, path=DEFAULT_SAVE_PATH):
+        print('saving memory')
+        with shelve.open(path) as shelf:
+            shelf["idx"] = self.current_memory_index
+            shelf["mem usage"] = self.memory_usage
+            shelf["actions"] = self.actions
+            shelf["rewards"] = self.rewards
+            shelf["terminals"] = self.terminals
+            shelf["state t"] = self.state_t
+            shelf["state t+1"] = self.state_t_plus_1
+        self.screens.flush()
+        # Is it really a good idea to copy a file that is that big? Probably not. Meh
+        copyfile(self.memory_filepath, self.memory_filepath+'.bak')
+
+
+    def load_memory(self, path=DEFAULT_SAVE_PATH):
+        if not os.path.exists(path):
+            self.current_memory_index = 0
+            self.memory_usage = 0
+            self.actions = np.empty(self.memory_size, dtype=np.uint8)
+            self.rewards = np.empty(self.memory_size, dtype=np.integer)
+            self.terminals = np.empty(self.memory_size, dtype=np.bool)
+            self.state_t = np.empty(self.state_shape, dtype=np.float16)
+            self.state_t_plus_1 = np.empty(self.state_shape, dtype=np.float16)
+            print('Created new memory')
+        else:
+            move(self.memory_filepath+'.bak', self.memory_filepath)
+            with shelve.open(path) as shelf:
+                self.current_memory_index = shelf["idx"]
+                self.memory_usage = shelf["mem usage"]
+                self.actions = shelf["actions"]
+                self.rewards = shelf["rewards"]
+                self.terminals = shelf["terminals"]
+                self.state_t = shelf["state t"]
+                self.state_t_plus_1 = shelf["state t+1"]
+            print('Loaded memory from', path)
 
 
     def add(self, screen, action, reward, terminal):
@@ -116,10 +148,10 @@ class Memory:
         selected_memories = np.array(selected_memories)
 
         return(
-            self.state_t, 
-            self.actions[selected_memories], 
-            self.rewards[selected_memories], 
-            self.state_t_plus_1, 
+            self.state_t,
+            self.actions[selected_memories],
+            self.rewards[selected_memories],
+            self.state_t_plus_1,
             self.terminals[selected_memories],
             self.get_importance_sampling_weights(selected_memories),
             selected_memories
@@ -145,7 +177,7 @@ class Memory:
 
 
     @staticmethod
-    def reset(path=DEFAULT_PATH):
+    def reset(path=DEFAULT_MEMMAP_PATH):
         if os.path.exists(path):
             os.remove(path)
 

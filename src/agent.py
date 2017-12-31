@@ -87,6 +87,7 @@ class Agent:
                 makedirs(Parameters.SESSION_SAVE_DIRECTORY)
         self.tf_saver.save(self.tf_session, save_file)
         Plotter.save("out")
+        self.memory.save_memory()
         print("Saved session to", save_file)
 
 
@@ -118,7 +119,7 @@ class Agent:
 
                 self.step += 1
 
-                if self.step % 1000 == 0:
+                if self.step % 100 == 0:
                     self.save_session()
 
         self.save_session()
