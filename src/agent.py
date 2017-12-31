@@ -46,7 +46,7 @@ class Agent:
 
         self.action_space = Parameters.GAMES.get_action_space(Parameters.GAME)
         self.environment = environment
-        self.memory = PrioritizedMemory(self.action_space)
+        self.memory = PrioritizedMemory() if Parameters.USE_PRIORITIZATION else Memory()
         self.step = 0
 
         # select the type of DQN based on Parameters

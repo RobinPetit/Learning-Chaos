@@ -9,9 +9,21 @@ import os
 
 DEFAULT_PATH = "mem.dat"
 
+
+class ShortTermMemory:
+   
+    def __init__(self, mmap):
+        """
+        :param mmap: np.memmap
+            Memory map that holds all the experience samples.
+            This map represents the long-term memory.
+        """
+        self.long_term_mem = mmap
+
+
 class Memory:
 
-    def __init__(self, n_actions, destination=DEFAULT_PATH):
+    def __init__(self, destination=DEFAULT_PATH):
         """
         :param destination: str
             Path to the file where the long-term experience must be stored
@@ -24,7 +36,6 @@ class Memory:
         self.current_memory_index = 0
         self.memory_usage = 0
 
-        self.n_actions = n_actions
         self.actions = np.empty(self.memory_size, dtype=np.uint8)
         self.rewards = np.empty(self.memory_size, dtype=np.integer)
         screens_shape = (self.memory_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH)
@@ -114,7 +125,7 @@ class Memory:
             selected_memories
         )
 
-    def update(self, memory_indices, q_estimates, loss):
+    def update(self, memory_indices, q_estimates, losses, completion):
         pass # Regular memory is uniformly random
 
     def get_importance_sampling_weights(self, memory_indices):
@@ -147,7 +158,7 @@ class PrioritizedMemory(Memory):
     Prioritized experience replay
     Schaul et al.
     """
-    def __init__(self, n_actions, alpha=1.0, beta_0=2.0, epsilon=0.0, p_0=1.0, destination="mem.dat"):
+    def __init__(self, alpha=1.0, beta_0=2.0, epsilon=0.0, p_0=1.0, destination="mem.dat"):
         """
         :param alpha: float
             Degree of prioritization
@@ -164,7 +175,7 @@ class PrioritizedMemory(Memory):
             Path to the file where the long-term experience must be stored
             Note: Files cannot be larger than 2 Gb in 32-bit architectures
         """
-        Memory.__init__(self, n_actions, destination=destination)
+        Memory.__init__(self, destination=destination)
         self.alpha = alpha
         self.beta = self.beta_0 = beta_0
         self.epsilon = epsilon

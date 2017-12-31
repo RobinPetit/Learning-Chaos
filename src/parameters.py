@@ -11,13 +11,17 @@ class Parameters:
 
     # environment settings
     GAMES = Games()
+    GAME = "SpaceInvaders-v0"
     DISPLAY = False
     SLEEP_BETWEEN_STEPS = False
+
     USE_DDDQN = False
+    USE_PRIORITIZATION = False
 
     LOADED_FILE = None
 
     TO_UPDATE = None
+    CURRENT_STEP = 0
 
     @staticmethod
     def add_attr(name, value):
