@@ -113,7 +113,7 @@ class Agent:
         print('[Required {:3.2f}s to save all]'.format(post_save_time-time_at_start_save), end=' ')
         self.last_time = post_save_time
         elapsed_time = time.time() - self.initial_time
-        remaining_seconds = elapsed_time*(Parameters.MAX_STEPS - self.step)/self.step
+        remaining_seconds = elapsed_time*(Parameters.MAX_STEPS - self.step)/(self.step - self.initial_step)
         print("eta: {}s".format((timedelta(seconds=remaining_seconds))))
 
 
