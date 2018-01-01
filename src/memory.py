@@ -260,7 +260,7 @@ class PrioritizedMemory(Memory):
     def sample_memory(self, nb_samples=1):
         self.update_probs_and_weights()
         probs = self.sampling_probs[:self.memory_usage]
-        return np.random.choice(self.memory_usage, size=nb_samples, p=probs)[0]
+        return np.random.choice(self.memory_usage, size=nb_samples, p=probs)
 
     def update_probs_and_weights(self):
         probs = self.sampling_probs[:self.memory_usage]
