@@ -14,13 +14,22 @@ DEFAULT_SAVE_PATH = "memory-" + Parameters.GAME + '.shelf'
 
 class ShortTermMemory:
 
-    def __init__(self, mmap):
+    def __init__(self, mmap, memory):
         """
         :param mmap: np.memmap
             Memory map that holds all the experience samples.
             This map represents the long-term memory.
         """
+        self.parent_memory = memory
         self.long_term_mem = mmap
+        buffer_shape = list(mmap.shape)
+        buffer_shape[0] = Parameters.SHORT_TERM_MEMORY_SIZE
+        self.buffer = np.zeros(shape=buffer_shape)
+
+
+    def sample_random(self):
+        random_indices = np.random.choice(self.parent_memory.memory_usage, self.buffer.shape[0])
+        self.buffer = self.long_term_mem[random_indices, :]
 
 
 class Memory:
@@ -60,8 +69,17 @@ class Memory:
 
 
     def load_memory(self, path=DEFAULT_SAVE_PATH):
-        ret = os.path.exists(path)
-        if not ret:
+        try:
+            with shelve.open(path) as shelf:
+                self.current_memory_index = shelf["idx"]
+                self.memory_usage = shelf["mem usage"]
+                self.actions = shelf["actions"]
+                self.rewards = shelf["rewards"]
+                self.terminals = shelf["terminals"]
+                self.state_t = shelf["state t"]
+                self.state_t_plus_1 = shelf["state t+1"]
+            return True
+        except KeyError:
             self.current_memory_index = 0
             self.memory_usage = 0
             self.actions = np.empty(self.memory_size, dtype=np.uint8)
@@ -75,17 +93,7 @@ class Memory:
                 os.remove(self.memory_filepath+'.bak')
             except FileNotFoundError:
                 pass  # remove files if they exist so if they don't exist, just ignore
-        else:
-            with shelve.open(path) as shelf:
-                self.current_memory_index = shelf["idx"]
-                self.memory_usage = shelf["mem usage"]
-                self.actions = shelf["actions"]
-                self.rewards = shelf["rewards"]
-                self.terminals = shelf["terminals"]
-                self.state_t = shelf["state t"]
-                self.state_t_plus_1 = shelf["state t+1"]
-            print('Loaded memory from', path)
-        return ret
+            return False
 
 
     def add(self, screen, action, reward, terminal):
@@ -121,8 +129,12 @@ class Memory:
 
         return(state)
 
-    def sample_memory(self):
-        return np.random.randint(Parameters.AGENT_HISTORY_LENGTH, self.memory_usage)
+    def sample_memory(self, nb_samples=1):
+        """
+        :param nb_samples: int
+            Number of integers to return
+        """
+        return Parameters.AGENT_HISTORY_LENGTH + np.random.choice(self.memory_usage-Parameters.AGENT_HISTORY_LENGTH, nb_samples, replace=False)
 
     def bring_back_memories(self):
         """
@@ -144,12 +156,13 @@ class Memory:
 
         while(len(selected_memories) < self.minibatch_size):
 
-            memory = self.sample_memory()
+            memories = self.sample_memory(self.minibatch_size - len(selected_memories))
 
-            if(not self.includes_terminal(memory) and not self.includes_current_memory_index(memory)):
-                self.state_t[len(selected_memories), ...] = self.get_state(memory-1)
-                self.state_t_plus_1[len(selected_memories), ...] = self.get_state(memory)
-                selected_memories.append(memory)
+            for memory in memories:
+                if(not self.includes_terminal(memory) and not self.includes_current_memory_index(memory)):
+                    self.state_t[len(selected_memories), ...] = self.get_state(memory-1)
+                    self.state_t_plus_1[len(selected_memories), ...] = self.get_state(memory)
+                    selected_memories.append(memory)
 
         # for compatibility issues
         selected_memories = np.array(selected_memories)
@@ -244,10 +257,10 @@ class PrioritizedMemory(Memory):
         return ret
 
 
-    def sample_memory(self):
+    def sample_memory(self, nb_samples=1):
         self.update_probs_and_weights()
         probs = self.sampling_probs[:self.memory_usage]
-        return np.random.choice(np.arange(0, self.memory_usage), size=1, p=probs)[0]
+        return np.random.choice(self.memory_usage, size=nb_samples, p=probs)[0]
 
     def update_probs_and_weights(self):
         probs = self.sampling_probs[:self.memory_usage]
