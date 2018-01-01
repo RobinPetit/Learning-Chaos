@@ -214,7 +214,7 @@ class Agent:
         df = float(Parameters.FINAL_EXPLORATION_FRAME - Parameters.REPLAY_START_SIZE)
         return (dt / df)
 
-    def select_action(self):
+    def select_action(self, eps=None):
         """
         The agent uses its experience and expertise acquired
         through deep learning to make intelligent actions (sometimes)
@@ -222,7 +222,8 @@ class Agent:
 
         # compute epsilon at step t
         completion = self.get_learning_completion()
-        eps = Parameters.INITIAL_EXPLORATION - (completion * (Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION))
+		if eps is None:
+        	eps = Parameters.INITIAL_EXPLORATION - (completion * (Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION))
         if random.random() < eps:
             # take a random action
             action = np.random.randint(0, self.action_space, size=1)[0]
@@ -253,8 +254,15 @@ class Agent:
 
 
     def play(self):
-        print("To do")
-
-
-
+		self.environment.render(mode='human')
+        while True:
+            self.environment.terminal = False
+            while self.environment.get_lives():
+                action = self.select_action(eps=.1)
+                _, reward, done = self.environment.process_step(action)
+                if done:
+                    self.environment.reset()
+                    self.environment.terminal = False
+                time.sleep(1. / Parameters.FPS)
+                self.environment.render()
 

@@ -34,6 +34,12 @@ def play_random(params_path):
     all_scores = agent.play()
     print('mean: ', np.mean(all_scores), '\tstd: ', np.std(all_scores))
 
+def play_pre_trained(params_path):
+    Parameters.load(params_path)
+    environment = Environment()
+    agent = Agent(environment)
+    agent.play()
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('parameters_json', type=str, help='The path of the parameters to load (! Will be edited when saving!)')
@@ -42,6 +48,7 @@ if __name__ == "__main__":
     group.add_argument('--plot', action='store_true', help='Plot the results obtained during training')
     group.add_argument('--reset-plot', action='store_true', help='Delete results obtained during training')
     group.add_argument('--random', action='store_true', help='Play 500 games with random action selection and print the mean/std')
+	group.add_argument('--play', action='store_true', help='Play the game with pre-trained model')
 
     args = parser.parse_args()
     assert exists(args.parameters_json)
@@ -56,3 +63,5 @@ if __name__ == "__main__":
         print("Training results deleted from folder %s and Memory was removed from root." % OUT_FOLDER)
     elif args.random:
         play_random()
+    elif args.play:
+        play_pre_trained(args.parameters_json)
