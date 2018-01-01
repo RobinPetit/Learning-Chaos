@@ -11,6 +11,7 @@ from dqn import DQN
 from dddqn import DDDQN
 
 from os import path, makedirs
+from datetime import datetime, timedelta
 import random
 import time
 import sys
@@ -64,7 +65,8 @@ class Agent:
         self.tf_session = tf.Session()
         self.tf_saver = tf.train.Saver()
         self.load_session()
-        self.last_time = time.time()
+        self.initial_time = self.last_time = time.time()
+        self.initial_step = self.step
 
 
     def load_session(self):
@@ -82,14 +84,14 @@ class Agent:
 
     def save_session(self):
         time_at_start_save = time.time()
-        print('[Step {}  --  Took {:3.2f} s]'.format(self.step, time_at_start_save - self.last_time), end='\t')
+        print('{}: [Step {}k  --  Took {:3.2f} s]'.format(datetime.now(), self.step/1000, time_at_start_save - self.last_time), end=' ')
         self.last_time = time_at_start_save
 
         Parameters.CURRENT_STEP = self.step
         a = time.time()
         Parameters.update()
         b = time.time()
-        print('[{:3.2f}s for json]'.format(b-a), end='\t')
+        print('[{:3.2f}s for json]'.format(b-a), end=' ')
 
         save_file = path.join(Parameters.SESSION_SAVE_DIRECTORY, Parameters.SESSION_SAVE_FILENAME)
         if not path.exists(Parameters.SESSION_SAVE_DIRECTORY):
@@ -97,20 +99,22 @@ class Agent:
         a = time.time()
         self.tf_saver.save(self.tf_session, save_file)
         b = time.time()
-        print('[{:3.2f}s for tf]'.format(b-a), end='\t')
+        print('[{:3.2f}s for tf]'.format(b-a), end=' ')
 
         a = time.time()
         Plotter.save("out")
         b = time.time()
-        print('[{:3.2f}s for Plotter]'.format(b-a), end='\t')
+        print('[{:3.2f}s for Plotter]'.format(b-a), end=' ')
         a = time.time()
         self.memory.save_memory()
         b = time.time()
-        print('[{:3.2f}s for memory]'.format(b-a), end='\t')
+        print('[{:3.2f}s for memory]'.format(b-a), end=' ')
         post_save_time = time.time()
-        print('[Required {:3.2f}s to save all]'.format(post_save_time-time_at_start_save), end='\t')
+        print('[Required {:3.2f}s to save all]'.format(post_save_time-time_at_start_save), end=' ')
         self.last_time = post_save_time
-        print("Saved session")
+        elapsed_time = time.time() - self.initial_time
+        remaining_seconds = elapsed_time*(Parameters.MAX_STEPS - self.step)/self.step
+        print("eta: {}s".format((timedelta(seconds=remaining_seconds))))
 
 
     def train(self):
