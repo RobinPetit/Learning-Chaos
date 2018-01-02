@@ -18,6 +18,11 @@ import sys
 import numpy as np
 import tensorflow as tf
 
+from random import randint  as py_randint  # faster than np for a single element. np is
+                                           # interesting to generate many numbers at once
+
+randint = lambda a, b: py_randint(a, b-1)  # to emulate np randint behaviour: return in [a, b)
+
 class RandomAgent:
     def __init__(self, environment):
         self.action_space = Parameters.GAMES.get_action_space(Parameters.GAME)
@@ -31,7 +36,7 @@ class RandomAgent:
             self.environment.reset()
             self.environment.terminal = False
             while self.environment.get_lives() > 0:
-                action = np.random.randint(0, self.action_space, size=1)[0]
+                action = randint(0, self.action_space)
                 _, reward, done = self.environment.process_step(action)
                 score += reward
                 if done:
@@ -228,7 +233,7 @@ class Agent:
             eps = Parameters.INITIAL_EXPLORATION - (completion * (Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION))
         if random.random() < eps:
             # take a random action
-            action = np.random.randint(0, self.action_space, size=1)[0]
+            action = randint(0, self.action_space)
         else:
             # take a smart action
             input_shape = (1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
