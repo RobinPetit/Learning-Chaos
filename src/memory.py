@@ -265,7 +265,7 @@ class PrioritizedMemory(Memory):
     def update_probs_and_weights(self):
         probs = self.sampling_probs[:self.memory_usage]
         self.sampling_probs[:self.memory_usage] = probs = probs / probs.sum()
-        max_w_i = self.i_s_weights[:self.memory_usage]
+        max_w_i = self.i_s_weights[:self.memory_usage].max()
         self.i_s_weights[:self.memory_usage] = (self.memory_usage * probs) ** (-self.beta) / max_w_i
 
     def update(self, memory_indices, q_estimates, losses, completion):
