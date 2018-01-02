@@ -222,8 +222,8 @@ class Agent:
 
         # compute epsilon at step t
         completion = self.get_learning_completion()
-		if eps is None:
-        	eps = Parameters.INITIAL_EXPLORATION - (completion * (Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION))
+        if eps is None:
+            eps = Parameters.INITIAL_EXPLORATION - (completion * (Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION))
         if random.random() < eps:
             # take a random action
             action = np.random.randint(0, self.action_space, size=1)[0]
@@ -254,7 +254,7 @@ class Agent:
 
 
     def play(self):
-		self.environment.render(mode='human')
+        self.environment.render(mode='human')
         while True:
             self.environment.terminal = False
             while self.environment.get_lives():

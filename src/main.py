@@ -48,7 +48,7 @@ if __name__ == "__main__":
     group.add_argument('--plot', action='store_true', help='Plot the results obtained during training')
     group.add_argument('--reset-plot', action='store_true', help='Delete results obtained during training')
     group.add_argument('--random', action='store_true', help='Play 500 games with random action selection and print the mean/std')
-	group.add_argument('--play', action='store_true', help='Play the game with pre-trained model')
+    group.add_argument('--play', action='store_true', help='Play the game with pre-trained model')
 
     args = parser.parse_args()
     assert exists(args.parameters_json)
