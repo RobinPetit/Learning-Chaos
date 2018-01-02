@@ -131,8 +131,8 @@ The interest of using a neural network is to be able to update the weights such 
 \end{equation}
 
 Therefore, the NN is trained by minimizing the Huber loss~\citep{huber1964robust} with $\delta=1$ of the Bellman equation (by a -- stochastic -- gradient descent).
-The Huber loss $H_\delta$, parameterized by $\delta \in {\mathbb R^*}^+$, is a continuous function (also $C^1$ but not $C^2$) defined by the MSE
-on a small neighbourhood of $0$, and by the absolute value outside this neighbourhood:
+The Huber loss $H_\delta$, parameterized by $\delta \in {\mathbb R^*}^+$, is a continuous function (also $C^1$ but not $C^2$) defined by the mean
+squared error on a small neighbourhood of $0$, and by the absolute value outside this neighbourhood:
 \begin{equation}
 	H_\delta : \mathbb R \to \mathbb R : x \mapsto \begin{cases}\frac 12x^2                                &\text{ if } \abs x \leq \delta,\\
 	                                                            \delta\left(\abs x - \frac 12\delta\right) &\text{ otherwise.}\end{cases}
@@ -155,6 +155,11 @@ The first CNN outputs 32 $20 \times 20$ images from a $84 \times 84$ image, usin
 These are then reshaped into a column vector (of size $7 \times 7 \times 64 = 3136$) and fed into the first fully connected layer with 512 neurons,
 which is then connected to the last layer (again fully connected) which corresponds to the output with the same size as the action space (6 in the
 case of Space Invaders).
+
+\subsubsection{Implementation}
+Tensorflow \todo{explain}
+\citep{tensorflow2015-whitepaper}
+
 
 \subsection{Update of the weights}
 
