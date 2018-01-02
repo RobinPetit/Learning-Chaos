@@ -150,8 +150,10 @@ class Agent:
 
                 self.step += 1
 
-                if self.step % 1000 == 0:
+                if self.step % 5000 == 0:
                     self.save_session()
+                if self.step % Parameters.SHORT_TERM_MEMORY_UPDATE_PERIOD == 0:  # This name is waaaaaaaaaaaaaaaay too long <3
+                    self.memory.update_short_term()
 
         self.save_session()
 

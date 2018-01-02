@@ -40,6 +40,10 @@
         "desc": "Number of training cases over which each stochastic gradient descent (SGD) update is computed",
         "value": 32
     },
+	"SHORT_TERM_MEMORY_UPDATE_PERIOD": {
+		"desc": "Number of steps between two updates of short term memory",
+		"value": 50000
+	},
     "SHORT_TERM_MEMORY_SIZE": {
         "desc": "Number of experience samples stored in RAM",
         "value": 50000
