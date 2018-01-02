@@ -175,7 +175,12 @@ The $\hat Q$ target action-value network is then copied back from the action val
 
 \section{Results}
 
-  \todo{Plots avec les erreurs d'apprentissage (pas de cross-val)}
+\begin{figure*}
+  \includegraphics[width=\textwidth]{figures/dqn_uniform}
+  \caption{(Left) Total score per episode during learning phase, smoothed using a moving average with a window of size 2000.
+     (Right) Estimation of Q, averaged across actions, for each batch during learning phase and smoothed using a moving average
+      with a window of size 2000.}
+\end{figure*}
 
 Figure~\ref{fig:t-SNE}\todo{Link the right figure} shows a 2-dimensional representation of the last fully connected hidden layer, i.e. a 512-dimensional
 vector. The method of \textit{projection} that was used is t-SNE~\citep{maaten2008visualizing}, which is part of the manifold learning algorithms, also
