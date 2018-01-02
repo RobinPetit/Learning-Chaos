@@ -93,8 +93,6 @@ a normalized performance of 0\% and the human score results in a normalized perf
 Finally it has been pointed out by the original DQN conceptors that DQN has an ability to learn by acquiring experience generated from policies
 other than its own. \todo{On peut en faire qqch pas vrai ?}
 
-\todo{introduce DDDQN}
-
 \section{Methods}
 
 Our source code is available at \url{https://github.com/RobinPetit/Learning-Chaos}.
@@ -143,32 +141,47 @@ stability.~\todo{check if this has a proper reference or drop it}
 
 \subsection{Neural Network architecture}
 
-The Neural Network is composed of three CNNs followed by a fully connected layer, leading to the final fully connected layer which is the output.
-Between each of these units is a non-linear unit: a Rectifier Linear Unit (ReLU) \citep{krizhevsky2012imagenet}, but an Exponential Linear Unit (ELU) could
-also be used since it has been shown to be more performant in classification and decision tasks~\citep{DBLP:journals/corr/ClevertUH15}, or even a
-Flexible Rectified Linear Unit~\citep{qiu2017flexible}.
+The Deep Q-Network is a Convolutional Neural Network (CNN) composed of three convolutional layers followed by a fully-connected layer, 
+leading to the final output fully-connected layer.
+Between each of these units a non-linear function is applied, which result in Rectifier Linear Units (ReLU) \citep{krizhevsky2012imagenet}, but Exponential Linear Units (ELU) could
+also be used since it has been shown to be more performant in classification and decision tasks~\citep{DBLP:journals/corr/ClevertUH15}, but also
+Flexible Rectified Linear Units~\citep{qiu2017flexible}.
 
-The first CNN outputs 32 $20 \times 20$ images from a $84 \times 84$ image, using $8 \times 8$ filters and a stride of $4$. The second one outputs
-64 $9 \times 9$ images from the previous 32, using filters of size $4 \times 4$ and a stride of $2$; and the third and last CNN outputs performs
-64 $3 \times 3$ filters with stride $1$ on the 64 subimages of the previous layer to output $7 \times 7$ images.
+The first convolutional layer outputs 32 $20 \times 20$ images from a $84 \times 84$ image, using $8 \times 8$ filters and a stride of $4$. The second one outputs
+64 images of size $9 \times 9$ from the previous 32, using filters of size $4 \times 4$ and a stride of $2$; and the third and last convolutional layer
+applies 64 filters of size $3 \times 3$ with stride $1$ on the 64 subimages of the previous layer to output $7 \times 7$ images.
 
-These are then reshaped into a column vector (of size $7 \times 7 \times 64 = 3136$) and fed into the first fully connected layer with 512 neurons,
-which is then connected to the last layer (again fully connected) which corresponds to the output with the same size as the action space (6 in the
+These are then reshaped into a column vector (of size $7 \times 7 \times 64 = 3136$) and fed into the first fully-connected layer with 512 neurons,
+which is then connected to the last layer (again fully-connected) which corresponds to the output with the same size as the action space (6 in the
 case of Space Invaders).
 
+We also reimplemented a Dueling Deep Q-Network (DDQN) in which the high-level representation of states and action values are separated.
+For this purpose,the same convolutional architecture as before was kept, but the output of the last convolutionel layer was split in two streams of
+equal sizes (each stream input size is the same as the output size of the last convolutional layer), then the resulting tensors have been flattened.
+The first stream, which is designed to represent the potential advantage per action, is fully-connected to 6 neurons (one per action), while the second stream
+contains a dense representation of the state value and is fully-connected to a single neuron.
+
+The last layer of the DDQN outputs Q-value estimates by evaluating the following formula:
+\begin{multline}
+    Q(s, a; \theta, \alpha, \beta) = V(s; \theta, \beta) + \\ ( A(s, a; \theta, \alpha) - \frac{1}{|\mathcal{A}|} \Sigma_{a'} A(s, a'; \theta, \alpha) )
+\end{multline}
+where $V$ is the output of the state-value stream, $A$ is the output of the advantage-per-action stream, $s$ is the input state (image), 
+$\alpha$ are the parameters of the state-value stream's fully-connected layer, $\beta$ are the parameters of the state-value stream's
+fully-connected layer, $\theta$ are the parameters of the rest of the network, and $\mathcal{A}$ is the discrete action space.
+
 \subsubsection{Implementation}
-Tensorflow \todo{explain}
-\citep{tensorflow2015-whitepaper}
+The neural networks have been implemented using the software library Tensorflow \citep{tensorflow2015-whitepaper}.
+Thus our models consist of data flow graphs designed in a symbolic programming fashion, where each node of a graph is an operation
+and each edge is a data tensor.
 
-
-\subsection{Update of the weights}
+\subsection{Weight update}
 
 In order to reduce oscillation in $Q$ estimations, two separate neural networks have been used: the first one, denoted $Q$ and called the \textit{action-value}
 network is the one used in action prediction, and the second one denotes $\hat Q$ and called the \textit{target action-value} network is used when
-updating the weights. The parameters of $Q$ are denoted by $\theta$ as previously, and the parameters of $\hat Q$ are denoted by $\theta^-$.
+updating the weights. This particular method holds for both DQN and DDQN The parameters of $Q$ are denoted by $\theta$ as previously, and the parameters of $\hat Q$ are denoted by $\theta^-$.
 
 Every 4 steps, at time $t$, a minibatch of 32 past experiences $\left\{(s_{t_j}, a_{t_j}, r_{t_j}, s_{t_j+1})\right\}_{j=1}^{32}$ is selected uniformly from the
-memory in order to perform a Stochastic Gradient Descent (SGD), meaning that the average of the gradients of the loss function on each experience is used to update
+memory in order to perform a Stochastic Gradient Descent (SGD), thus the average of the gradients of the loss function on each experience is used to update
 the weights. As mentioned above, the loss function is a Huber loss function and is defined as:
 \begin{equation}
 	H_1\left(y_j - Q(s_{t_j}, a_{t_j}; \theta)\right),
@@ -182,8 +195,8 @@ The $\hat Q$ target action-value network is then copied back from the action val
 
 \begin{figure*}
   \includegraphics[width=\textwidth]{figures/dqn_uniform}
-  \caption{(Left) Total score per episode during learning phase, smoothed using a moving average with a window of size 2000.
-     (Right) Estimation of Q, averaged across actions, for each batch during learning phase and smoothed using a moving average
+  \caption{(Left) Total score per episode during a learning phase of 1.000.000 steps, smoothed using a moving average with a window of size 2000.
+     (Right) Estimation of Q, averaged across actions, for each batch during a learning phase of 1.000.000 steps and smoothed using a moving average
       with a window of size 2000.}
 \end{figure*}
 
