@@ -209,6 +209,8 @@ class Agent:
         """
         Returns the number of performed learning steps divided by the maximum number of steps
         """
+        if self.step >= Parameters.FINAL_EXPLORATION_FRAME:
+            return 1
         dt_final = Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION
         dt = float(self.step - Parameters.REPLAY_START_SIZE)
         df = float(Parameters.FINAL_EXPLORATION_FRAME - Parameters.REPLAY_START_SIZE)
