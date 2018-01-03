@@ -88,11 +88,6 @@ class Memory:
             self.state_t = np.empty(self.state_shape, dtype=np.float16)
             self.state_t_plus_1 = np.empty(self.state_shape, dtype=np.float16)
             print('Created new memory')
-            try:
-                os.remove(self.memory_filepath)
-                os.remove(self.memory_filepath+'.bak')
-            except FileNotFoundError:
-                pass  # remove files if they exist so if they don't exist, just ignore
             return False
 
 
