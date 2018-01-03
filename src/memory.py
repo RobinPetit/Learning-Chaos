@@ -9,8 +9,12 @@ import os
 from shutil import copyfile, move
 import shelve
 
+from time import time
+
 DEFAULT_MEMMAP_PATH = "mem.dat"
 DEFAULT_SAVE_PATH = "memory-" + Parameters.GAME + '.shelf'
+
+STATE_TYPE = np.float16
 
 class ShortTermMemory:
 
@@ -19,17 +23,92 @@ class ShortTermMemory:
         :param mmap: np.memmap
             Memory map that holds all the experience samples.
             This map represents the long-term memory.
+        :param memory: Memory
+            Parent memory
         """
+        self.history_length = Parameters.AGENT_HISTORY_LENGTH
         self.parent_memory = memory
         self.long_term_mem = mmap
+        self.buff_size = Parameters.SHORT_TERM_MEMORY_SIZE
         buffer_shape = list(mmap.shape)
-        buffer_shape[0] = Parameters.SHORT_TERM_MEMORY_SIZE
-        self.buffer = np.zeros(shape=buffer_shape)
+        buffer_shape[0] = self.buff_size * self.history_length
+        # shape is (history size * STM size [4*50k], img height [84], img width [84]) [~2.7Gb]
+        self.screens_buffer = np.zeros(shape=buffer_shape, dtype=STATE_TYPE)
+        self.use_buffer = False
+        self.minibatch_size = Parameters.MINIBATCH_SIZE
+        self.state_shape = (self.minibatch_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
+        self.state_t = np.empty(self.state_shape, dtype=STATE_TYPE)
+        self.state_t_plus_1 = np.empty(self.state_shape, dtype=STATE_TYPE)
 
 
     def sample_random(self):
-        random_indices = np.random.choice(self.parent_memory.memory_usage, self.buffer.shape[0])
-        self.buffer = self.long_term_mem[random_indices, :]
+        """
+        Sample a random subset of the memmap to keep in RAM
+        """
+        a = time()
+        self.random_indices = np.random.choice(self.parent_memory.memory_usage - self.history_length, self.buff_size)
+        self.random_indices.sort()
+        buffer_indices = np.arange(1, self.buff_size+1)*self.history_length
+        for offset in range(1, self.history_length+1):
+            self.screens_buffer[buffer_indices - offset] = self.long_term_mem[self.random_indices + offset]
+        print('\tShort term memory sampled randomly. Took {:2.1f}s'.format(time()-a))
+
+
+    def load_memmap(self):
+        """
+        Load part of the LTM map into STM if LTM is too big or load the whole LTM in STM if size fits
+        """
+        self.use_buffer = self.parent_memory.memory_usage - self.history_length > self.buff_size
+        if not self.use_buffer:
+            self.random_indices = np.arange(self.parent_memory.memory_usage)
+            self.screens_buffer[:self.parent_memory.memory_usage] = self.long_term_mem[:self.parent_memory.memory_usage]
+        else:
+            self.sample_random()
+
+
+    def sample_memory(self, nb_samples=1):
+        """
+        :param nb_samples: int
+            Number of integers to return
+
+        :return:
+            The index of a random state of the history
+
+            NOTE: the memory contains `self.buff_size` states which are each composed of `self.history_length` frames.
+            So the size of the buffer is `self.buff_size * self.history_length`, but the range of return is `[0, self.buff_size-1)`.
+            The -1 in the upper bound is to be able to retrieve state_{t+1}!
+        """
+        return np.random.choice(self.buff_size-1, nb_samples, replace=False)
+
+
+    def state_idx_to_frame_idx(self, state_idx):
+        return (state_idx+1)*self.history_length - 1
+
+
+    def get_state(self, state_idx):
+        state = self.screens_buffer[(state_idx - self.history_length) + 1 : state_idx + 1, ...]
+
+        state = np.swapaxes(state, 0, 1)
+        state = np.swapaxes(state, 1, 2)
+
+        return state
+
+
+    def bring_back_memories(self):
+        selected_memories = []
+
+        while len(selected_memories) < self.minibatch_size:
+
+            memories = self.sample_memory(self.minibatch_size - len(selected_memories))
+
+            for state_idx in memories:
+                if not self.parent_memory.includes_terminal(self.random_indices[state_idx]):
+                    self.state_t[len(selected_memories), ...] = self.get_state(self.state_idx_to_frame_idx(state_idx))
+                    self.state_t_plus_1[len(selected_memories), ...] = self.get_state(self.state_idx_to_frame_idx(state_idx+1))
+                    selected_memories.append(state_idx)
+
+        selected_memories = self.random_indices[np.array(selected_memories)]
+        return selected_memories, self.state_t, self.state_t_plus_1
 
 
 class Memory:
@@ -49,9 +128,12 @@ class Memory:
         self.memory_size = Parameters.LONG_TERM_MEMORY_SIZE
 
         screens_shape = (self.memory_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH)
-        self.screens = np.memmap(self.memory_filepath, mode="w+", shape=screens_shape, dtype=np.float16)
+        self.screens = np.memmap(self.memory_filepath, mode="w+", shape=screens_shape, dtype=STATE_TYPE)
+        self.short_term_memory = ShortTermMemory(self.screens, self)
         self.minibatch_size = Parameters.MINIBATCH_SIZE
         self.state_shape = (self.minibatch_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
+        self.state_t = np.empty(self.state_shape, dtype=STATE_TYPE)
+        self.state_t_plus_1 = np.empty(self.state_shape, dtype=STATE_TYPE)
         if load:
             self.load_memory()
 
@@ -63,12 +145,11 @@ class Memory:
             shelf["actions"] = self.actions
             shelf["rewards"] = self.rewards
             shelf["terminals"] = self.terminals
-            shelf["state t"] = self.state_t
-            shelf["state t+1"] = self.state_t_plus_1
         self.screens.flush()
 
 
     def load_memory(self, path=DEFAULT_SAVE_PATH):
+        ret = True
         try:
             with shelve.open(path) as shelf:
                 self.current_memory_index = shelf["idx"]
@@ -76,19 +157,18 @@ class Memory:
                 self.actions = shelf["actions"]
                 self.rewards = shelf["rewards"]
                 self.terminals = shelf["terminals"]
-                self.state_t = shelf["state t"]
-                self.state_t_plus_1 = shelf["state t+1"]
-            return True
         except KeyError:
             self.current_memory_index = 0
             self.memory_usage = 0
             self.actions = np.empty(self.memory_size, dtype=np.uint8)
             self.rewards = np.empty(self.memory_size, dtype=np.integer)
             self.terminals = np.empty(self.memory_size, dtype=np.bool)
-            self.state_t = np.empty(self.state_shape, dtype=np.float16)
-            self.state_t_plus_1 = np.empty(self.state_shape, dtype=np.float16)
+            self.state_t = np.empty(self.state_shape, dtype=STATE_TYPE)
+            self.state_t_plus_1 = np.empty(self.state_shape, dtype=STATE_TYPE)
             print('Created new memory')
-            return False
+            ret = False
+        self.short_term_memory.load_memmap()
+        return ret
 
 
     def add(self, screen, action, reward, terminal):
@@ -147,6 +227,11 @@ class Memory:
         """
         assert(self.memory_usage > Parameters.AGENT_HISTORY_LENGTH)
 
+        selected_memories, self.state_t, self.state_t_plus_1 = self.short_term_memory.bring_back_memories()
+
+
+        # I would't dare to remove this :broken_heart:  --> How to use PrioritizedMemory with this?
+        """
         selected_memories = []
 
         while(len(selected_memories) < self.minibatch_size):
@@ -161,6 +246,7 @@ class Memory:
 
         # for compatibility issues
         selected_memories = np.array(selected_memories)
+        """
 
         return(
             self.state_t,
@@ -171,6 +257,10 @@ class Memory:
             self.get_importance_sampling_weights(selected_memories),
             selected_memories
         )
+
+
+    def update_short_term(self):
+        self.short_term_memory.load_memmap()
 
     def update(self, memory_indices, q_estimates, losses, completion):
         pass # Regular memory is uniformly random
