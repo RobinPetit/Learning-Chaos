@@ -13,8 +13,9 @@ class Games:
         self.PONG = "Pong-v0"
         self.SPACE_INVADERS = "SpaceInvaders-v0"
         self.TENNIS = "Tennis-v0"
+        self.BREAKOUT = "Breakout-v0"
 
-        self.available_games_list = [self.ASTEROIDS, self.PONG, self.SPACE_INVADERS, self.TENNIS]
+        self.available_games_list = [self.ASTEROIDS, self.PONG, self.SPACE_INVADERS, self.TENNIS, self.BREAKOUT]
         self.action_space = {}
 
     def define_action_spaces(self):

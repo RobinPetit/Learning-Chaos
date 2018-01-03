@@ -93,31 +93,13 @@ class Environment:
         """
 
         lives_before_action = self.lives
-        cumulated_reward = Parameters.NO_REWARD
-
-        # frame skipping (see Parameters for more information)
-        skipped = 0 # break is evil
-        while(skipped < Parameters.FRAME_SKIPPING and not self.terminal):
-
-            self.take_action(action)
-            cumulated_reward += self.reward
-            self.episode_score += self.reward
-
-            """
-            [Article] For games where there is a life counter, the Atari
-            2600 emulator also sends the number of lives left in the game, which is then used to
-            mark the end of an episode during training.
-            """
-            if self.lives < lives_before_action:
-                cumulated_reward += Parameters.NEGATIVE_REWARD
-                self.terminal = True
-
-                Plotter.add_episode_score(self.episode_score)
-                self.episode_score = 0
-
-            skipped += 1
-
-        self.reward = cumulated_reward
+        self.take_action(action)
+        self.episode_score += self.reward
+        if self.lives < lives_before_action:
+            self.reward += Parameters.NEGATIVE_REWARD
+            self.terminal = True
+            Plotter.add_episode_score(self.episode_score)
+            self.episode_score = 0
 
         return(self.state, self.reward, self.terminal)
 

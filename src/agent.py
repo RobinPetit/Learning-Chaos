@@ -89,7 +89,7 @@ class Agent:
 
     def save_session(self):
         time_at_start_save = time.time()
-        print('{}: [Step {}k  --  Took {:3.2f} s]'.format(datetime.now(), self.step/1000, time_at_start_save - self.last_time), end=' ')
+        print('{}: [Step {}k  --  Took {:3.2f} s]'.format(datetime.now(), self.step//1000, time_at_start_save - self.last_time), end=' ')
         self.last_time = time_at_start_save
 
         Parameters.CURRENT_STEP = self.step
@@ -150,7 +150,7 @@ class Agent:
 
                 self.step += 1
 
-                if self.step % 1000 == 0:
+                if self.step % 5000 == 0:
                     self.save_session()
 
         self.save_session()
@@ -200,7 +200,7 @@ class Agent:
         self.memory.add(screen, action, reward_clipper(reward), terminal,)
 
         # if we started learning
-        if(self.step > Parameters.REPLAY_START_SIZE):
+        if(self.step > Parameters.REPLAY_START_SIZE and self.step % Parameters.FRAME_SKIPPING == 0):
 
             # Perform SGD updates at frequency [Parameters.UPDATE_FREQUENCY]
             if(not(self.step % Parameters.UPDATE_FREQUENCY)):
@@ -226,7 +226,8 @@ class Agent:
         The agent uses its experience and expertise acquired
         through deep learning to make intelligent actions (sometimes)
         """
-
+        if self.step > 0 and self.step % Parameters.FRAME_SKIPPING != 0:
+            return self.last_action
         # compute epsilon at step t
         completion = self.get_learning_completion()
         if eps is None:
@@ -242,7 +243,7 @@ class Agent:
 
             q_values = self.tf_session.run(self.dqn.q_values, {self.dqn_input: dqn_input})
             Plotter.add_q_values_at_t(q_values)
-
+        self.last_action = action
         return(action)
 
 
