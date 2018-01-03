@@ -7,7 +7,7 @@ from parameters import Parameters
 import numpy as np
 import cv2
 
-    
+
 def y_channel(image):
     """
     Y-channel = luminance = greyscale = (0.299*R + 0.587*G + 0.114*B)
@@ -36,15 +36,16 @@ def remove_flickering(previous_image, image):
     return(np.asarray([previous_image, image]).max(axis=0))
 
 def preprocess_img(previous_image, image):
-    return(screen_resize(y_channel(remove_flickering(previous_image, image))/255))
+    #return(screen_resize(y_channel(remove_flickering(previous_image, image))/255))
+    return(screen_resize(y_channel(image)/255))
 
 def reward_clipper(reward):
     """
-    [Article] As the scale of scores varies greatly from game to game, we clipped 
-    all positive rewards at 1 and all negative rewards at 21, leaving 0 rewards unchanged. 
-    Clipping the rewards in this manner limits the scale of the error derivatives and 
-    makes it easier to use the same learning rate across multiple games. 
-    At the same time, it could affect the performance of our agent since it cannot 
+    [Article] As the scale of scores varies greatly from game to game, we clipped
+    all positive rewards at 1 and all negative rewards at 21, leaving 0 rewards unchanged.
+    Clipping the rewards in this manner limits the scale of the error derivatives and
+    makes it easier to use the same learning rate across multiple games.
+    At the same time, it could affect the performance of our agent since it cannot
     differentiate between rewards of different magnitude.
     """
     return(max(Parameters.NEGATIVE_REWARD, min(Parameters.POSITIVE_REWARD, reward)))

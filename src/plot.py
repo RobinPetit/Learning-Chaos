@@ -15,8 +15,8 @@ def warn_if_empty(func):
             print("[Warning] Could not save figure in %s: empty sequence" % func.__name__)
     return new_func
 
-def moving_average(sequence, n=100):
-    ma = np.cumsum(sequence)
+def moving_average(sequence, n=1000):
+    ma = np.cumsum(sequence, axis=0)
     ma[n:] = ma[n:] - ma[:-n]
     return ma[n-1:] / n
 
@@ -33,7 +33,7 @@ class Plotter:
 
     @staticmethod
     def add_q_values_at_t(q_values):
-        Plotter.Q_VALUES_CURRENT_BATCH.append(np.squeeze(q_values))
+        Plotter.Q_VALUES.append(np.squeeze(q_values))
 
     @staticmethod
     def notify_batch():
@@ -45,7 +45,7 @@ class Plotter:
     @staticmethod
     @warn_if_empty
     def plot_e_scores():
-        smoothed = moving_average(Plotter.SCORES_PER_EPISODE, n=50)
+        smoothed = moving_average(Plotter.SCORES_PER_EPISODE)
         plt.plot(smoothed)
         plt.xlabel("Episode")
         plt.ylabel("Average score per episode")
@@ -53,9 +53,11 @@ class Plotter:
     @staticmethod
     @warn_if_empty
     def plot_q_values():
-        avg_q_values = np.asarray(Plotter.Q_VALUES).mean(axis=1)
-        smoothed = moving_average(avg_q_values)
-        plt.plot(smoothed)
+        avg_q_values = np.asarray(Plotter.Q_VALUES)
+        smoothed = moving_average(avg_q_values, n=5000).T
+        for idx, smoothed_q_value in enumerate(smoothed):
+            plt.plot(smoothed_q_value, label='Action {}'.format(idx))
+        plt.legend()
         plt.xlabel("Number of batches")
         plt.ylabel("Average Q-values")
 
@@ -63,7 +65,7 @@ class Plotter:
     def save_plots(folder):
         if not os.path.exists(folder):
             os.makedirs(folder)
-        
+
         Plotter.plot_e_scores()
         plt.savefig(os.path.join(folder, "e_scores.png"))
         plt.clf(); plt.close()
@@ -92,14 +94,14 @@ class Plotter:
         q_values_path = os.path.join(folder, "q_values.npy")
         np.save(e_scores_path, np.asarray(Plotter.SCORES_PER_EPISODE))
         np.save(q_values_path, np.asarray(Plotter.Q_VALUES))
-    
+
     @staticmethod
     def reset(folder):
         for name in os.listdir(folder):
             filepath = os.path.join(folder, name)
             if filepath.endswith(".png") or filepath.endswith(".npy"):
                 os.remove(filepath)
-        
+
 
 class EmbeddingProjector:
     pass # TODO: manifold learning (Robin: PCA <3)

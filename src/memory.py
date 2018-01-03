@@ -51,7 +51,7 @@ class ShortTermMemory:
         buffer_indices = np.arange(1, self.buff_size+1)*self.history_length
         for offset in range(1, self.history_length+1):
             self.screens_buffer[buffer_indices - offset] = self.long_term_mem[self.random_indices + offset]
-        print('\tShort term memory sampled randomly. Took {:2.1f}s'.format(time()-a))
+        print('\tShort term memory sampled randomly from {} elements. Took {:2.1f}s'.format(self.parent_memory.memory_usage, time()-a))
 
 
     def load_memmap(self):
@@ -157,14 +157,13 @@ class Memory:
                 self.actions = shelf["actions"]
                 self.rewards = shelf["rewards"]
                 self.terminals = shelf["terminals"]
+            print('Loaded memory')
         except KeyError:
             self.current_memory_index = 0
             self.memory_usage = 0
             self.actions = np.empty(self.memory_size, dtype=np.uint8)
             self.rewards = np.empty(self.memory_size, dtype=np.integer)
             self.terminals = np.empty(self.memory_size, dtype=np.bool)
-            self.state_t = np.empty(self.state_shape, dtype=STATE_TYPE)
-            self.state_t_plus_1 = np.empty(self.state_shape, dtype=STATE_TYPE)
             print('Created new memory')
             ret = False
         self.short_term_memory.load_memmap()

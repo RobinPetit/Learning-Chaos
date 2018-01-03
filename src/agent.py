@@ -72,6 +72,7 @@ class Agent:
         self.load_session()
         self.initial_time = self.last_time = time.time()
         self.initial_step = self.step
+        self.last_action = randint(0, self.action_space)
 
 
     def load_session(self):
@@ -150,7 +151,7 @@ class Agent:
 
                 self.step += 1
 
-                if self.step % 5000 == 0:
+                if self.step % 10000 == 0:
                     self.save_session()
                 if self.step % Parameters.SHORT_TERM_MEMORY_UPDATE_PERIOD == 0:  # This name is waaaaaaaaaaaaaaaay too long <3
                     self.memory.update_short_term()
@@ -164,8 +165,6 @@ class Agent:
         Apply Q-learning updates, or minibatch updates, to samples of experience,
         (s, a, r, s') ~ U(D), drawn at random from the pool of stored samples.
         """
-
-        Plotter.notify_batch() # Notify the plotter that the next data points will correspond to a new batch
 
         if(self.memory.get_usage() > Parameters.AGENT_HISTORY_LENGTH):
 
@@ -185,6 +184,12 @@ class Agent:
             })
 
             self.memory.update(memory_indices, np.squeeze(q_t), losses, self.get_learning_completion())
+            input_shape = (1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
+            dqn_input = self.environment.get_input().reshape(input_shape)
+            q_values = self.tf_session.run(self.dqn.q_values, {self.dqn_input: dqn_input})
+            Plotter.add_q_values_at_t(q_values)
+        else:
+            print('[WARNING] Not enough memory for a batch')
 
 
     def observe(self, screen, action, reward, terminal):
@@ -203,13 +208,13 @@ class Agent:
 
         # if we started learning
         if(self.step > Parameters.REPLAY_START_SIZE and self.step % Parameters.FRAME_SKIPPING == 0):
-
+            nb_selected_actions = self.step // Parameters.FRAME_SKIPPING
             # Perform SGD updates at frequency [Parameters.UPDATE_FREQUENCY]
-            if(not(self.step % Parameters.UPDATE_FREQUENCY)):
+            if(not(nb_selected_actions % Parameters.UPDATE_FREQUENCY)):
                 self.batch_q_learning()
 
             # Update Target DQN at frequency [Parameters.TARGET_NETWORK_UPDATE_FREQUENCY]
-            if(not(self.step % Parameters.TARGET_NETWORK_UPDATE_FREQUENCY)):
+            if(not(nb_selected_actions % Parameters.TARGET_NETWORK_UPDATE_FREQUENCY)):
                 self.update_target_dqn()
 
     def get_learning_completion(self):
@@ -228,7 +233,7 @@ class Agent:
         The agent uses its experience and expertise acquired
         through deep learning to make intelligent actions (sometimes)
         """
-        if self.step > 0 and self.step % Parameters.FRAME_SKIPPING != 0:
+        if self.step % Parameters.FRAME_SKIPPING != 0:
             return self.last_action
         # compute epsilon at step t
         completion = self.get_learning_completion()
@@ -243,8 +248,6 @@ class Agent:
             dqn_input = self.environment.get_input().reshape(input_shape)
             action = self.tf_session.run(self.dqn.smartest_action, {self.dqn_input: dqn_input})
 
-            q_values = self.tf_session.run(self.dqn.q_values, {self.dqn_input: dqn_input})
-            Plotter.add_q_values_at_t(q_values)
         self.last_action = action
         return(action)
 
