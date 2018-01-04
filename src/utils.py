@@ -37,7 +37,8 @@ def remove_flickering(previous_image, image):
 
 def preprocess_img(previous_image, image):
     #return(screen_resize(y_channel(remove_flickering(previous_image, image))/255))
-    return(screen_resize(y_channel(image)/255))
+    #return(screen_resize(y_channel(image)/255))
+    return(screen_resize(y_channel(remove_flickering(previous_image, image))/255))
 
 def reward_clipper(reward):
     """

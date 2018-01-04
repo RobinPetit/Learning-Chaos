@@ -4,6 +4,7 @@
 
 from parameters import Parameters
 import numpy as np
+import matplotlib.pyplot as plt
 
 import os
 from shutil import copyfile, move
@@ -92,6 +93,12 @@ class ShortTermMemory:
     def get_state(self, state_idx):
         state = self.screens_buffer[(state_idx - self.history_length) + 1 : state_idx + 1, ...]
 
+        """
+        for img in state:
+            plt.imshow(np.asarray(np.round(img * 255), dtype=np.uint8))
+            plt.show()
+        """
+
         state = np.swapaxes(state, 0, 1)
         state = np.swapaxes(state, 1, 2)
 
@@ -152,7 +159,10 @@ class Memory:
         self.memory_size = Parameters.LONG_TERM_MEMORY_SIZE
 
         screens_shape = (self.memory_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH)
-        self.screens = np.memmap(self.memory_filepath, mode="w+", shape=screens_shape, dtype=STATE_TYPE)
+        if os.path.isfile(self.memory_filepath):
+            self.screens = np.memmap(self.memory_filepath, mode="r+", shape=screens_shape, dtype=STATE_TYPE)
+        else:
+            self.screens = np.memmap(self.memory_filepath, mode="w+", shape=screens_shape, dtype=STATE_TYPE)
         self.short_term_memory = stm_type(self.screens, self)
         self.minibatch_size = Parameters.MINIBATCH_SIZE
         self.state_shape = (self.minibatch_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
