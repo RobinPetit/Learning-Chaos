@@ -75,4 +75,5 @@ class Parameters:
                 if data[key]['value'] != Parameters.get_attr(key):
                     data[key]["value"] = Parameters.get_attr(key)
         with open(Parameters.LOADED_FILE, "w") as f:
-            json.dump(data, f)
+            pretty_str = json.dumps(data, indent=4, sort_keys=True)
+            f.write(pretty_str)
