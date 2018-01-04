@@ -50,8 +50,8 @@ class ShortTermMemory:
         self.random_indices = np.random.choice(self.parent_memory.memory_usage - self.history_length, self.buff_size)
         self.random_indices.sort()
         for offset in range(self.history_length):
-            indices[offset::self.history_length] = self.random_indices + offset
-        self.screens_buffer[:, ...] = self.long_term_mem[indices, ...]
+            self.indices[offset::self.history_length] = self.random_indices + offset
+        self.screens_buffer[:, ...] = self.long_term_mem[self.indices, ...]
         print('\tShort term memory sampled randomly from {} elements. Took {:2.1f}s'.format(self.parent_memory.memory_usage, time()-a))
 
 
