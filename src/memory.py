@@ -47,6 +47,7 @@ class ShortTermMemory:
         """
         a = time()
         self.random_indices = np.random.choice(self.parent_memory.memory_usage - self.history_length, self.buff_size)
+        print(len(self.random_indices))
         self.random_indices.sort()
         buffer_indices = np.arange(1, self.buff_size+1)*self.history_length
         for offset in range(1, self.history_length+1):
@@ -139,24 +140,24 @@ class Memory:
 
 
     def save_memory(self, path=DEFAULT_SAVE_PATH):
-        with shelve.open(path) as shelf:
-            shelf["idx"] = self.current_memory_index
-            shelf["mem usage"] = self.memory_usage
-            shelf["actions"] = self.actions
-            shelf["rewards"] = self.rewards
-            shelf["terminals"] = self.terminals
+        shelf = shelve.open(path)
+        shelf["idx"] = self.current_memory_index
+        shelf["mem usage"] = self.memory_usage
+        shelf["actions"] = self.actions
+        shelf["rewards"] = self.rewards
+        shelf["terminals"] = self.terminals
         self.screens.flush()
 
 
     def load_memory(self, path=DEFAULT_SAVE_PATH):
         ret = True
         try:
-            with shelve.open(path) as shelf:
-                self.current_memory_index = shelf["idx"]
-                self.memory_usage = shelf["mem usage"]
-                self.actions = shelf["actions"]
-                self.rewards = shelf["rewards"]
-                self.terminals = shelf["terminals"]
+            shelf = shelve.open(path)
+            self.current_memory_index = shelf["idx"]
+            self.memory_usage = shelf["mem usage"]
+            self.actions = shelf["actions"]
+            self.rewards = shelf["rewards"]
+            self.terminals = shelf["terminals"]
             print('Loaded memory')
         except KeyError:
             self.current_memory_index = 0
@@ -318,14 +319,13 @@ class PrioritizedMemory(Memory):
         self.p_0 = p_0
         self.load_memory()
 
-
     def save_memory(self, path=DEFAULT_SAVE_PATH):
         Memory.save_memory(self, path)
-        with shelve.open(path) as shelf:
-            shelf["priorities"] = self.priorities
-            shelf["sampling"] = self.sampling_probs
-            shelf["weights"] = self.i_s_weights
-
+        shelf = shelve.open(path)
+        shelf["priorities"] = self.priorities
+        shelf["sampling"] = self.sampling_probs
+        shelf["weights"] = self.i_s_weights
+        shelf.close()
 
     def load_memory(self, path=DEFAULT_SAVE_PATH):
         ret = Memory.load_memory(self, path)
@@ -334,12 +334,12 @@ class PrioritizedMemory(Memory):
             self.sampling_probs = np.ones(self.memory_size, dtype=np.float64)
             self.i_s_weights = np.ones(self.memory_size, dtype=np.float64)
         else:
-            with shelve.open(path) as shelf:
-                self.priorities = shelf["priorities"]
-                self.sampling_probs = shelf["sampling"]
-                self.i_s_weights = shelf["weights"]
+            shelf = shelve.open(path)
+            self.priorities = shelf["priorities"]
+            self.sampling_probs = shelf["sampling"]
+            self.i_s_weights = shelf["weights"]
+            shelf.close()
         return ret
-
 
     def sample_memory(self, nb_samples=1):
         self.update_probs_and_weights()
