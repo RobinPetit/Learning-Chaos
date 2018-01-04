@@ -13,9 +13,8 @@ class Parameters:
     GAMES = Games()
     GAME = "SpaceInvaders-v0"
     DISPLAY = False
-    SLEEP_BETWEEN_STEPS = False
 
-    USE_DDDQN = False
+    USE_DDDQN = True
     USE_PRIORITIZATION = False
 
     LOADED_FILE = None
@@ -37,6 +36,7 @@ class Parameters:
         name = name.upper()
         setattr(Parameters, name, value)
 
+    @staticmethod
     def get_attr(name):
         return getattr(Parameters, name.upper())
 
@@ -75,4 +75,5 @@ class Parameters:
                 if data[key]['value'] != Parameters.get_attr(key):
                     data[key]["value"] = Parameters.get_attr(key)
         with open(Parameters.LOADED_FILE, "w") as f:
-            json.dump(data, f)
+            pretty_str = json.dumps(data, indent=4, sort_keys=True)
+            f.write(pretty_str)

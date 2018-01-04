@@ -4,7 +4,7 @@
 
 from utils import reward_clipper
 from environment import Environment
-from memory import Memory, PrioritizedMemory
+from memory import Memory, PrioritizedMemory, BalancedMemory
 from parameters import Parameters
 from plot import Plotter
 from dqn import DQN
@@ -22,6 +22,7 @@ from random import randint  as py_randint  # faster than np for a single element
                                            # interesting to generate many numbers at once
 
 randint = lambda a, b: py_randint(a, b-1)  # to emulate np randint behaviour: return in [a, b)
+
 
 class RandomAgent:
     def __init__(self, environment):
@@ -46,13 +47,14 @@ class RandomAgent:
         print('')
         return all_scores
 
+
 class Agent:
 
     def __init__(self, environment):
 
         self.action_space = Parameters.GAMES.get_action_space(Parameters.GAME)
         self.environment = environment
-        self.memory = PrioritizedMemory() if Parameters.USE_PRIORITIZATION else Memory()
+        self.memory = PrioritizedMemory() if Parameters.USE_PRIORITIZATION else BalancedMemory()
         self.step = 0
 
         # select the type of DQN based on Parameters
@@ -90,14 +92,14 @@ class Agent:
 
     def save_session(self):
         time_at_start_save = time.time()
-        print('{}: [Step {}k  --  Took {:3.2f} s]'.format(datetime.now(), self.step//1000, time_at_start_save - self.last_time), end=' ')
+        sys.stdout.write('{}: [Step {}k  --  Took {:3.2f} s] '.format(datetime.now(), self.step//1000, time_at_start_save - self.last_time))
         self.last_time = time_at_start_save
 
         Parameters.CURRENT_STEP = self.step
         a = time.time()
         Parameters.update()
         b = time.time()
-        print('[{:3.2f}s for json]'.format(b-a), end=' ')
+        sys.stdout.write('[{:3.2f}s for json] '.format(b-a))
 
         save_file = path.join(Parameters.SESSION_SAVE_DIRECTORY, Parameters.SESSION_SAVE_FILENAME)
         if not path.exists(Parameters.SESSION_SAVE_DIRECTORY):
@@ -105,18 +107,18 @@ class Agent:
         a = time.time()
         self.tf_saver.save(self.tf_session, save_file)
         b = time.time()
-        print('[{:3.2f}s for tf]'.format(b-a), end=' ')
+        sys.stdout.write('[{:3.2f}s for tf] '.format(b-a))
 
         a = time.time()
         Plotter.save("out")
         b = time.time()
-        print('[{:3.2f}s for Plotter]'.format(b-a), end=' ')
+        sys.stdout.write('[{:3.2f}s for Plotter] '.format(b-a))
         a = time.time()
         self.memory.save_memory()
         b = time.time()
-        print('[{:3.2f}s for memory]'.format(b-a), end=' ')
+        sys.stdout.write('[{:3.2f}s for memory] '.format(b-a))
         post_save_time = time.time()
-        print('[Required {:3.2f}s to save all]'.format(post_save_time-time_at_start_save), end=' ')
+        sys.stdout.write('[Required {:3.2f}s to save all] '.format(post_save_time-time_at_start_save))
         self.last_time = post_save_time
         elapsed_time = time.time() - self.initial_time
         remaining_seconds = elapsed_time*(Parameters.MAX_STEPS - self.step)/(self.step - self.initial_step)
@@ -144,7 +146,7 @@ class Agent:
                     self.environment.reset()
                     break
 
-                if(Parameters.SLEEP_BETWEEN_STEPS):
+                if Parameters.DISPLAY:
                     time.sleep(1.0 / Parameters.FPS) # Wait one step
 
                 self.environment.render()

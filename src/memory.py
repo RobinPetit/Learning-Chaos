@@ -33,6 +33,7 @@ class ShortTermMemory:
         buffer_shape = list(mmap.shape)
         buffer_shape[0] = self.buff_size * self.history_length
         # shape is (history size * STM size [4*50k], img height [84], img width [84]) [~2.7Gb]
+        self.rewards = np.empty(self.buff_size, dtype=np.int64)
         self.screens_buffer = np.zeros(shape=buffer_shape, dtype=STATE_TYPE)
         self.use_buffer = False
         self.minibatch_size = Parameters.MINIBATCH_SIZE
@@ -52,6 +53,7 @@ class ShortTermMemory:
         for offset in range(self.history_length):
             self.indices[offset::self.history_length] = self.random_indices + offset
         self.screens_buffer[:, ...] = self.long_term_mem[self.indices, ...]
+        self.rewards[:] = self.parent_memory.rewards[self.random_indices]
         print('\tShort term memory sampled randomly from {} elements. Took {:2.1f}s'.format(self.parent_memory.memory_usage, time()-a))
 
 
@@ -63,6 +65,7 @@ class ShortTermMemory:
         if not self.use_buffer:
             self.random_indices = np.arange(self.parent_memory.memory_usage)
             self.screens_buffer[:self.parent_memory.memory_usage] = self.long_term_mem[:self.parent_memory.memory_usage]
+            self.rewards[:self.parent_memory.memory_usage] = self.parent_memory.rewards[:self.parent_memory.memory_usage]
         else:
             self.sample_random()
 
@@ -112,9 +115,29 @@ class ShortTermMemory:
         return selected_memories, self.state_t, self.state_t_plus_1
 
 
+class ShortTermBalancedMemory(ShortTermMemory):
+
+    def __init__(self, *args, **kwargs):
+        ShortTermMemory.__init__(self, *args, **kwargs)
+
+    def sample_memory(self, nb_samples=1):
+        """
+        :param nb_samples: int
+            Number of integers to return
+        """
+        rewards = self.rewards[:self.buff_size-1]
+        weights = np.ones(self.buff_size-1, dtype=np.float)
+        weights[rewards < 0] *= 15
+        weights[rewards > 0] *= 10
+        weights /= weights.sum()
+        indices = np.random.choice(self.buff_size-1, nb_samples, p=weights)
+        #print(list(self.rewards[indices]))
+        return indices
+
+
 class Memory:
 
-    def __init__(self, destination=DEFAULT_MEMMAP_PATH, load=True):
+    def __init__(self, destination=DEFAULT_MEMMAP_PATH, load=True, stm_type=ShortTermMemory):
         """
         :param destination: str
             Path to the file where the long-term experience must be stored
@@ -130,7 +153,7 @@ class Memory:
 
         screens_shape = (self.memory_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH)
         self.screens = np.memmap(self.memory_filepath, mode="w+", shape=screens_shape, dtype=STATE_TYPE)
-        self.short_term_memory = ShortTermMemory(self.screens, self)
+        self.short_term_memory = stm_type(self.screens, self)
         self.minibatch_size = Parameters.MINIBATCH_SIZE
         self.state_shape = (self.minibatch_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
         self.state_t = np.empty(self.state_shape, dtype=STATE_TYPE)
@@ -140,24 +163,24 @@ class Memory:
 
 
     def save_memory(self, path=DEFAULT_SAVE_PATH):
-        with shelve.open(path) as shelf:
-            shelf["idx"] = self.current_memory_index
-            shelf["mem usage"] = self.memory_usage
-            shelf["actions"] = self.actions
-            shelf["rewards"] = self.rewards
-            shelf["terminals"] = self.terminals
+        shelf = shelve.open(path)
+        shelf["idx"] = self.current_memory_index
+        shelf["mem usage"] = self.memory_usage
+        shelf["actions"] = self.actions
+        shelf["rewards"] = self.rewards
+        shelf["terminals"] = self.terminals
         self.screens.flush()
 
 
     def load_memory(self, path=DEFAULT_SAVE_PATH):
         ret = True
         try:
-            with shelve.open(path) as shelf:
-                self.current_memory_index = shelf["idx"]
-                self.memory_usage = shelf["mem usage"]
-                self.actions = shelf["actions"]
-                self.rewards = shelf["rewards"]
-                self.terminals = shelf["terminals"]
+            shelf = shelve.open(path)
+            self.current_memory_index = shelf["idx"]
+            self.memory_usage = shelf["mem usage"]
+            self.actions = shelf["actions"]
+            self.rewards = shelf["rewards"]
+            self.terminals = shelf["terminals"]
             print('Loaded memory')
         except KeyError:
             self.current_memory_index = 0
@@ -287,6 +310,11 @@ class Memory:
             os.remove(path)
 
 
+class BalancedMemory(Memory):
+    def __init__(self, destination=DEFAULT_MEMMAP_PATH, load=True):
+        Memory.__init__(self, destination=destination, load=load, stm_type=ShortTermBalancedMemory)
+
+
 class PrioritizedMemory(Memory):
     """
     References
@@ -319,14 +347,13 @@ class PrioritizedMemory(Memory):
         self.p_0 = p_0
         self.load_memory()
 
-
     def save_memory(self, path=DEFAULT_SAVE_PATH):
         Memory.save_memory(self, path)
-        with shelve.open(path) as shelf:
-            shelf["priorities"] = self.priorities
-            shelf["sampling"] = self.sampling_probs
-            shelf["weights"] = self.i_s_weights
-
+        shelf = shelve.open(path)
+        shelf["priorities"] = self.priorities
+        shelf["sampling"] = self.sampling_probs
+        shelf["weights"] = self.i_s_weights
+        shelf.close()
 
     def load_memory(self, path=DEFAULT_SAVE_PATH):
         ret = Memory.load_memory(self, path)
@@ -335,12 +362,12 @@ class PrioritizedMemory(Memory):
             self.sampling_probs = np.ones(self.memory_size, dtype=np.float64)
             self.i_s_weights = np.ones(self.memory_size, dtype=np.float64)
         else:
-            with shelve.open(path) as shelf:
-                self.priorities = shelf["priorities"]
-                self.sampling_probs = shelf["sampling"]
-                self.i_s_weights = shelf["weights"]
+            shelf = shelve.open(path)
+            self.priorities = shelf["priorities"]
+            self.sampling_probs = shelf["sampling"]
+            self.i_s_weights = shelf["weights"]
+            shelf.close()
         return ret
-
 
     def sample_memory(self, nb_samples=1):
         self.update_probs_and_weights()

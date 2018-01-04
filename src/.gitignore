@@ -1,2 +1,6 @@
 *.dat
 *.shelf
+*.shelf.dir
+*.shelf.bak
+
+parameters/dev.json
