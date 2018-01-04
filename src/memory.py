@@ -39,6 +39,7 @@ class ShortTermMemory:
         self.state_shape = (self.minibatch_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
         self.state_t = np.empty(self.state_shape, dtype=STATE_TYPE)
         self.state_t_plus_1 = np.empty(self.state_shape, dtype=STATE_TYPE)
+        self.indices = np.zeros(shape=self.buff_size*self.history_length, dtype=np.int)
 
 
     def sample_random(self):
@@ -48,7 +49,6 @@ class ShortTermMemory:
         a = time()
         self.random_indices = np.random.choice(self.parent_memory.memory_usage - self.history_length, self.buff_size)
         self.random_indices.sort()
-        indices = np.zeros(shape=self.buff_size*self.history_length, dtype=np.int)
         for offset in range(self.history_length):
             indices[offset::self.history_length] = self.random_indices + offset
         self.screens_buffer[:, ...] = self.long_term_mem[indices, ...]
