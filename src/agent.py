@@ -4,7 +4,7 @@
 
 from utils import reward_clipper
 from environment import Environment
-from memory import Memory, PrioritizedMemory
+from memory import Memory, PrioritizedMemory, BalancedMemory
 from parameters import Parameters
 from plot import Plotter
 from dqn import DQN
@@ -54,7 +54,7 @@ class Agent:
 
         self.action_space = Parameters.GAMES.get_action_space(Parameters.GAME)
         self.environment = environment
-        self.memory = PrioritizedMemory() if Parameters.USE_PRIORITIZATION else Memory()
+        self.memory = PrioritizedMemory() if Parameters.USE_PRIORITIZATION else BalancedMemory()
         self.step = 0
 
         # select the type of DQN based on Parameters
