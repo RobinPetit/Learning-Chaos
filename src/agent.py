@@ -23,7 +23,6 @@ from random import randint  as py_randint  # faster than np for a single element
 
 randint = lambda a, b: py_randint(a, b-1)  # to emulate np randint behaviour: return in [a, b)
 
-
 class RandomAgent:
     def __init__(self, environment):
         self.action_space = Parameters.GAMES.get_action_space(Parameters.GAME)
@@ -50,11 +49,12 @@ class RandomAgent:
 
 class Agent:
 
-    def __init__(self, environment):
+    def __init__(self, environment, load_memory=True):
 
         self.action_space = Parameters.GAMES.get_action_space(Parameters.GAME)
         self.environment = environment
-        self.memory = PrioritizedMemory() if Parameters.USE_PRIORITIZATION else BalancedMemory()
+        if load_memory:
+            self.memory = PrioritizedMemory() if Parameters.USE_PRIORITIZATION else Memory()
         self.step = 0
 
         # select the type of DQN based on Parameters
@@ -223,12 +223,8 @@ class Agent:
         """
         Returns the number of performed learning steps divided by the maximum number of steps
         """
-        if self.step >= Parameters.FINAL_EXPLORATION_FRAME:
-            return 1
-        dt_final = Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION
-        dt = float(self.step - Parameters.REPLAY_START_SIZE)
-        df = float(Parameters.FINAL_EXPLORATION_FRAME - Parameters.REPLAY_START_SIZE)
-        return (dt / df)
+        return min(1.0, self.step / Parameters.FINAL_EXPLORATION)
+
 
     def select_action(self, eps=None):
         """
@@ -271,13 +267,20 @@ class Agent:
     def play(self):
         self.environment.render(mode='human')
         while True:
-            self.environment.terminal = False
-            while self.environment.get_lives():
+            self.environment.reset()
+            game_reward = 0
+            while True:
                 action = self.select_action(eps=.1)
                 _, reward, done = self.environment.process_step(action)
+                game_reward += reward
                 if done:
-                    self.environment.reset()
                     self.environment.terminal = False
+                    game_reward += 1
+                    if self.environment.get_lives() == 0:
+                        print('Score:', game_reward)
+                        game_reward = 0
+                        break
+                    self.environment.reset()
                 time.sleep(1. / Parameters.FPS)
                 self.environment.render()
 
