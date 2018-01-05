@@ -142,10 +142,6 @@ class Agent:
                 # observe the consequence of the action
                 self.observe(state, action, reward, terminal)
 
-                if terminal:
-                    self.environment.reset()
-                    break
-
                 if Parameters.DISPLAY:
                     time.sleep(1.0 / Parameters.FPS) # Wait one step
 
@@ -157,6 +153,11 @@ class Agent:
                     self.save_session()
                 if self.step % Parameters.SHORT_TERM_MEMORY_UPDATE_PERIOD == 0:  # This name is waaaaaaaaaaaaaaaay too long <3
                     self.memory.update_short_term()
+
+                if terminal:
+                    self.environment.reset()
+                    break
+
 
         self.save_session()
 
