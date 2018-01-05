@@ -36,8 +36,9 @@ def play_random(params_path):
 
 def play_pre_trained(params_path):
     Parameters.load(params_path)
+    Parameters.DISPLAY = True
     environment = Environment()
-    agent = Agent(environment)
+    agent = Agent(environment, load_memory=False)
     agent.play()
 
 if __name__ == "__main__":
