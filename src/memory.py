@@ -32,8 +32,8 @@ class ShortTermMemory:
         self.long_term_mem = mmap
         self.buff_size = Parameters.SHORT_TERM_MEMORY_SIZE
         buffer_shape = list(mmap.shape)
-        buffer_shape[0] = self.buff_size * self.history_length
-        # shape is (history size * STM size [4*50k], img height [84], img width [84]) [~2.7Gb]
+        buffer_shape[0] = self.buff_size
+        # shape is (STM size [50k], img height [84], img width [84]) [~670Mb]
         self.rewards = np.empty(self.buff_size, dtype=np.int64)
         self.screens_buffer = np.zeros(shape=buffer_shape, dtype=STATE_TYPE)
         self.use_buffer = False
@@ -49,12 +49,9 @@ class ShortTermMemory:
         Sample a random subset of the memmap to keep in RAM
         """
         a = time()
-        self.random_indices = np.random.choice(self.parent_memory.memory_usage - self.history_length, self.buff_size)
-        self.random_indices.sort()
-        for offset in range(self.history_length):
-            self.indices[offset::self.history_length] = self.random_indices + offset
-        self.screens_buffer[:, ...] = self.long_term_mem[self.indices, ...]
-        self.rewards[:] = self.parent_memory.rewards[self.random_indices]
+        self.base_idx = np.random.randint(self.parent_memory.memory_usage - self.buff_size)
+        self.screens_buffer[:, ...] = self.long_term_mem[self.base_idx:(self.base_idx+self.buff_size), ...]
+        self.rewards[:] = self.parent_memory.rewards[self.base_idx:(self.base_idx+self.buff_size)]
         print('\tShort term memory sampled randomly from {} elements. Took {:2.1f}s'.format(self.parent_memory.memory_usage, time()-a))
 
 
@@ -64,6 +61,7 @@ class ShortTermMemory:
         """
         self.use_buffer = self.parent_memory.memory_usage - self.history_length > self.buff_size
         if not self.use_buffer:
+            # TODO: update this properly
             self.random_indices = np.arange(self.parent_memory.memory_usage)
             self.screens_buffer[:self.parent_memory.memory_usage] = self.long_term_mem[:self.parent_memory.memory_usage]
             self.rewards[:self.parent_memory.memory_usage] = self.parent_memory.rewards[:self.parent_memory.memory_usage]
@@ -83,11 +81,12 @@ class ShortTermMemory:
             So the size of the buffer is `self.buff_size * self.history_length`, but the range of return is `[0, self.buff_size-1)`.
             The -1 in the upper bound is to be able to retrieve state_{t+1}!
         """
-        return np.random.choice(self.buff_size-1, nb_samples, replace=False)
+        return self.history_length + np.random.choice(self.buff_size-self.history_length-1, nb_samples, replace=False)
 
 
     def state_idx_to_frame_idx(self, state_idx):
-        return (state_idx+1)*self.history_length - 1
+        return state_idx
+        #return (state_idx+1)*self.history_length - 1
 
 
     def get_state(self, state_idx):
@@ -113,12 +112,12 @@ class ShortTermMemory:
             memories = self.sample_memory(self.minibatch_size - len(selected_memories))
 
             for state_idx in memories:
-                if not self.parent_memory.includes_terminal(self.random_indices[state_idx]):
+                if not self.parent_memory.includes_terminal(self.base_idx + state_idx):
                     self.state_t[len(selected_memories), ...] = self.get_state(self.state_idx_to_frame_idx(state_idx))
                     self.state_t_plus_1[len(selected_memories), ...] = self.get_state(self.state_idx_to_frame_idx(state_idx+1))
                     selected_memories.append(state_idx)
 
-        selected_memories = self.random_indices[np.array(selected_memories)]
+        selected_memories = self.base_idx + np.array(selected_memories)
         return selected_memories, self.state_t, self.state_t_plus_1
 
 
