@@ -52,12 +52,16 @@ class Parameters:
         with open(filepath, "r") as f:
             data = json.load(f)
             for key in sorted(data.keys()):
-                if type(data[key]) is dict:
-                    if key in ("SESSION_SAVE_FILENAME", "SESSION_SAVE_DIRECTORY"):
+                if isinstance(data[key], dict):
+                    if key in (
+                        "SESSION_SAVE_FILENAME",
+                            "SESSION_SAVE_DIRECTORY"):
                         # make session path specific to the game being played
-                        data[key]["value"] = data[key]["value"] + Parameters.GAME
+                        data[key]["value"] = data[key]["value"] + \
+                            Parameters.GAME
                     elif key == "GAME":
-                        data[key]["value"] = eval('Parameters.GAMES.' + data[key]["value"])
+                        data[key]["value"] = eval(
+                            'Parameters.GAMES.' + data[key]["value"])
                     Parameters.add_attr(key, data[key]["value"])
                     if "update" in data[key] and data[key]["update"]:
                         Parameters.TO_UPDATE.append(key)
@@ -70,7 +74,8 @@ class Parameters:
         with open(Parameters.LOADED_FILE, "r") as f:
             data = json.load(f)
             for key in data:
-                if type(data[key]) is not dict or key not in Parameters.TO_UPDATE:
+                if not isinstance(data[key],
+                                  dict) or key not in Parameters.TO_UPDATE:
                     continue
                 if data[key]['value'] != Parameters.get_attr(key):
                     data[key]["value"] = Parameters.get_attr(key)

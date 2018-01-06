@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-# tf_decorator.py 
+# tf_decorator.py
 # author : Robin Petit, Stanislas Gueniffey, Cedric Simar, Antoine Passemiers
 
 import functools
 import tensorflow as tf
+
 
 def doublewrap(function):
     """
@@ -18,6 +19,7 @@ def doublewrap(function):
             return lambda wrapee: function(wrapee, *args, **kwargs)
     return decorator
 
+
 @doublewrap
 def define_scope(function, scope=None, *args, **kwargs):
     """
@@ -31,6 +33,7 @@ def define_scope(function, scope=None, *args, **kwargs):
     """
     attribute = '_cache_' + function.__name__
     name = scope or function.__name__
+
     @property
     @functools.wraps(function)
     def decorator(self):
@@ -39,4 +42,3 @@ def define_scope(function, scope=None, *args, **kwargs):
                 setattr(self, attribute, function(self))
         return getattr(self, attribute)
     return decorator
-

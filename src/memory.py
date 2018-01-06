@@ -17,6 +17,7 @@ DEFAULT_SAVE_PATH = "memory-" + Parameters.GAME + '.shelf'
 #STATE_TYPE = np.float16
 STATE_TYPE = np.uint8
 
+
 class ShortTermMemory:
 
     def __init__(self, mmap, memory):
@@ -38,11 +39,17 @@ class ShortTermMemory:
         self.screens_buffer = np.zeros(shape=buffer_shape, dtype=STATE_TYPE)
         self.use_buffer = False
         self.minibatch_size = Parameters.MINIBATCH_SIZE
-        self.state_shape = (self.minibatch_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
+        self.state_shape = (
+            self.minibatch_size,
+            Parameters.IMAGE_HEIGHT,
+            Parameters.IMAGE_WIDTH,
+            Parameters.AGENT_HISTORY_LENGTH)
         self.state_t = np.empty(self.state_shape, dtype=STATE_TYPE)
         self.state_t_plus_1 = np.empty(self.state_shape, dtype=STATE_TYPE)
-        self.indices = np.zeros(shape=self.buff_size*self.history_length, dtype=np.int)
-
+        self.indices = np.zeros(
+            shape=self.buff_size *
+            self.history_length,
+            dtype=np.int)
 
     def sample_random(self):
         """
@@ -50,17 +57,23 @@ class ShortTermMemory:
         """
         a = time()
         self.buff_size = Parameters.SHORT_TERM_MEMORY_SIZE
-        self.base_idx = np.random.randint(self.parent_memory.memory_usage - self.buff_size)
-        self.screens_buffer[:, ...] = self.long_term_mem[self.base_idx:(self.base_idx+self.buff_size), ...]
-        self.rewards[:] = self.parent_memory.rewards[self.base_idx:(self.base_idx+self.buff_size)]
-        print('\tShort term memory sampled randomly from {} elements. Took {:2.1f}s'.format(self.parent_memory.memory_usage, time()-a))
-
+        self.base_idx = np.random.randint(
+            self.parent_memory.memory_usage - self.buff_size)
+        self.screens_buffer[:, ...] = self.long_term_mem[self.base_idx:(
+            self.base_idx + self.buff_size), ...]
+        self.rewards[:] = self.parent_memory.rewards[self.base_idx:(
+            self.base_idx + self.buff_size)]
+        print(
+            '\tShort term memory sampled randomly from {} elements. Took {:2.1f}s'.format(
+                self.parent_memory.memory_usage,
+                time() - a))
 
     def load_memmap(self):
         """
         Load part of the LTM map into STM if LTM is too big or load the whole LTM in STM if size fits
         """
-        self.use_buffer = self.parent_memory.memory_usage - self.history_length > Parameters.SHORT_TERM_MEMORY_SIZE
+        self.use_buffer = self.parent_memory.memory_usage - \
+            self.history_length > Parameters.SHORT_TERM_MEMORY_SIZE
         if not self.use_buffer:
             self.buff_size = self.parent_memory.memory_usage
             self.base_idx = 0
@@ -68,7 +81,6 @@ class ShortTermMemory:
             self.rewards[:self.parent_memory.memory_usage] = self.parent_memory.rewards[:self.parent_memory.memory_usage]
         else:
             self.sample_random()
-
 
     def sample_memory(self, nb_samples=1):
         """
@@ -82,34 +94,37 @@ class ShortTermMemory:
             So the size of the buffer is `self.buff_size * self.history_length`, but the range of return is `[0, self.buff_size-1)`.
             The -1 in the upper bound is to be able to retrieve state_{t+1}!
         """
-        return self.history_length + np.random.choice(self.buff_size-self.history_length-1, nb_samples, replace=False)
-
+        return self.history_length + \
+            np.random.choice(self.buff_size - self.history_length - 1, nb_samples, replace=False)
 
     def state_idx_to_frame_idx(self, state_idx):
         return state_idx
-        #return (state_idx+1)*self.history_length - 1
-
+        # return (state_idx+1)*self.history_length - 1
 
     def get_state(self, state_idx):
-        state = self.screens_buffer[(state_idx - self.history_length) + 1 : state_idx + 1, ...]
+        state = self.screens_buffer[(
+            state_idx - self.history_length) + 1: state_idx + 1, ...]
 
         state = np.swapaxes(state, 0, 1)
         state = np.swapaxes(state, 1, 2)
 
         return state
 
-
     def bring_back_memories(self):
         selected_memories = []
 
         while len(selected_memories) < self.minibatch_size:
 
-            memories = self.sample_memory(self.minibatch_size - len(selected_memories))
+            memories = self.sample_memory(
+                self.minibatch_size - len(selected_memories))
 
             for state_idx in memories:
-                if not self.parent_memory.includes_terminal(self.base_idx + state_idx):
-                    self.state_t[len(selected_memories), ...] = self.get_state(self.state_idx_to_frame_idx(state_idx))
-                    self.state_t_plus_1[len(selected_memories), ...] = self.get_state(self.state_idx_to_frame_idx(state_idx+1))
+                if not self.parent_memory.includes_terminal(
+                        self.base_idx + state_idx):
+                    self.state_t[len(selected_memories), ...] = self.get_state(
+                        self.state_idx_to_frame_idx(state_idx))
+                    self.state_t_plus_1[len(selected_memories), ...] = self.get_state(
+                        self.state_idx_to_frame_idx(state_idx + 1))
                     selected_memories.append(state_idx)
 
         selected_memories = self.base_idx + np.array(selected_memories)
@@ -126,19 +141,23 @@ class ShortTermBalancedMemory(ShortTermMemory):
         :param nb_samples: int
             Number of integers to return
         """
-        rewards = self.rewards[:self.buff_size-1]
-        weights = np.ones(self.buff_size-1, dtype=np.float)
+        rewards = self.rewards[:self.buff_size - 1]
+        weights = np.ones(self.buff_size - 1, dtype=np.float)
         weights[rewards < 0] *= 15
         weights[rewards > 0] *= 10
         weights /= weights.sum()
-        indices = np.random.choice(self.buff_size-1, nb_samples, p=weights)
-        #print(list(self.rewards[indices]))
+        indices = np.random.choice(self.buff_size - 1, nb_samples, p=weights)
+        # print(list(self.rewards[indices]))
         return indices
 
 
 class Memory:
 
-    def __init__(self, destination=DEFAULT_MEMMAP_PATH, load=True, stm_type=ShortTermMemory):
+    def __init__(
+            self,
+            destination=DEFAULT_MEMMAP_PATH,
+            load=True,
+            stm_type=ShortTermMemory):
         """
         :param destination: str
             Path to the file where the long-term experience must be stored
@@ -152,19 +171,33 @@ class Memory:
 
         self.memory_size = Parameters.LONG_TERM_MEMORY_SIZE
 
-        screens_shape = (self.memory_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH)
+        screens_shape = (
+            self.memory_size,
+            Parameters.IMAGE_HEIGHT,
+            Parameters.IMAGE_WIDTH)
         if os.path.isfile(self.memory_filepath):
-            self.screens = np.memmap(self.memory_filepath, mode="r+", shape=screens_shape, dtype=STATE_TYPE)
+            self.screens = np.memmap(
+                self.memory_filepath,
+                mode="r+",
+                shape=screens_shape,
+                dtype=STATE_TYPE)
         else:
-            self.screens = np.memmap(self.memory_filepath, mode="w+", shape=screens_shape, dtype=STATE_TYPE)
+            self.screens = np.memmap(
+                self.memory_filepath,
+                mode="w+",
+                shape=screens_shape,
+                dtype=STATE_TYPE)
         self.short_term_memory = stm_type(self.screens, self)
         self.minibatch_size = Parameters.MINIBATCH_SIZE
-        self.state_shape = (self.minibatch_size, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
+        self.state_shape = (
+            self.minibatch_size,
+            Parameters.IMAGE_HEIGHT,
+            Parameters.IMAGE_WIDTH,
+            Parameters.AGENT_HISTORY_LENGTH)
         self.state_t = np.empty(self.state_shape, dtype=STATE_TYPE)
         self.state_t_plus_1 = np.empty(self.state_shape, dtype=STATE_TYPE)
         if load:
             self.load_memory()
-
 
     def save_memory(self, path=DEFAULT_SAVE_PATH):
         shelf = shelve.open(path)
@@ -174,7 +207,6 @@ class Memory:
         shelf["rewards"] = self.rewards
         shelf["terminals"] = self.terminals
         self.screens.flush()
-
 
     def load_memory(self, path=DEFAULT_SAVE_PATH):
         ret = True
@@ -197,7 +229,6 @@ class Memory:
         self.short_term_memory.load_memmap()
         return ret
 
-
     def add(self, screen, action, reward, terminal):
         # q_estimates are not used by the Memory, but by the PrioritizedMemory
 
@@ -206,9 +237,11 @@ class Memory:
         self.screens[self.current_memory_index, ...] = screen
         self.terminals[self.current_memory_index] = terminal
 
-        self.memory_usage = max(self.memory_usage, self.current_memory_index + 1)
-        self.current_memory_index = (self.current_memory_index + 1) % self.memory_size
-
+        self.memory_usage = max(
+            self.memory_usage,
+            self.current_memory_index + 1)
+        self.current_memory_index = (
+            self.current_memory_index + 1) % self.memory_size
 
     def get_state(self, state_index):
 
@@ -221,10 +254,14 @@ class Memory:
             state_index = state_index % self.memory_usage
 
             if(state_index >= Parameters.AGENT_HISTORY_LENGTH - 1):
-                state = self.screens[(state_index - Parameters.AGENT_HISTORY_LENGTH) + 1 : state_index + 1, ...]
+                state = self.screens[(state_index -
+                                      Parameters.AGENT_HISTORY_LENGTH) +
+                                     1: state_index +
+                                     1, ...]
             else:
                 # negative indices don't work well with slices in numpy..
-                state = self.screens[np.array([(state_index-i) % self.memory_usage for i in reversed(range(Parameters.AGENT_HISTORY_LENGTH))]), ...]
+                state = self.screens[np.array(
+                    [(state_index - i) % self.memory_usage for i in reversed(range(Parameters.AGENT_HISTORY_LENGTH))]), ...]
 
         state = np.swapaxes(state, 0, 1)
         state = np.swapaxes(state, 1, 2)
@@ -236,7 +273,8 @@ class Memory:
         :param nb_samples: int
             Number of integers to return
         """
-        return Parameters.AGENT_HISTORY_LENGTH + np.random.choice(self.memory_usage-Parameters.AGENT_HISTORY_LENGTH, nb_samples, replace=False)
+        return Parameters.AGENT_HISTORY_LENGTH + np.random.choice(
+            self.memory_usage - Parameters.AGENT_HISTORY_LENGTH, nb_samples, replace=False)
 
     def bring_back_memories(self):
         """
@@ -256,8 +294,8 @@ class Memory:
 
         selected_memories, self.state_t, self.state_t_plus_1 = self.short_term_memory.bring_back_memories()
 
-
-        # I would't dare to remove this :broken_heart:  --> How to use PrioritizedMemory with this?
+        # I would't dare to remove this :broken_heart:  --> How to use
+        # PrioritizedMemory with this?
         """
         selected_memories = []
 
@@ -285,12 +323,11 @@ class Memory:
             selected_memories
         )
 
-
     def update_short_term(self):
         self.short_term_memory.load_memmap()
 
     def update(self, memory_indices, q_estimates, losses, completion):
-        pass # Regular memory is uniformly random
+        pass  # Regular memory is uniformly random
 
     def get_importance_sampling_weights(self, memory_indices):
         # No importance sampling for regular memory
@@ -299,14 +336,11 @@ class Memory:
     def includes_terminal(self, index):
         return(np.any(self.terminals[(index - Parameters.AGENT_HISTORY_LENGTH):index]))
 
-
     def includes_current_memory_index(self, index):
         return((index >= self.current_memory_index) and (index - Parameters.AGENT_HISTORY_LENGTH < self.current_memory_index))
 
-
     def get_usage(self):
         return(self.memory_usage)
-
 
     @staticmethod
     def reset(path=DEFAULT_MEMMAP_PATH):
@@ -316,7 +350,11 @@ class Memory:
 
 class BalancedMemory(Memory):
     def __init__(self, destination=DEFAULT_MEMMAP_PATH, load=True):
-        Memory.__init__(self, destination=destination, load=load, stm_type=ShortTermBalancedMemory)
+        Memory.__init__(
+            self,
+            destination=destination,
+            load=load,
+            stm_type=ShortTermBalancedMemory)
 
 
 class PrioritizedMemory(Memory):
@@ -327,7 +365,14 @@ class PrioritizedMemory(Memory):
     Prioritized experience replay
     Schaul et al.
     """
-    def __init__(self, alpha=1.0, beta_0=2.0, epsilon=0.0, p_0=1.0, destination="mem.dat"):
+
+    def __init__(
+            self,
+            alpha=1.0,
+            beta_0=2.0,
+            epsilon=0.0,
+            p_0=1.0,
+            destination="mem.dat"):
         """
         :param alpha: float
             Degree of prioritization
@@ -362,7 +407,10 @@ class PrioritizedMemory(Memory):
     def load_memory(self, path=DEFAULT_SAVE_PATH):
         ret = Memory.load_memory(self, path)
         if not ret:
-            self.priorities = np.full(self.memory_size, fill_value=self.p_0, dtype=np.float32)
+            self.priorities = np.full(
+                self.memory_size,
+                fill_value=self.p_0,
+                dtype=np.float32)
             self.sampling_probs = np.ones(self.memory_size, dtype=np.float64)
             self.i_s_weights = np.ones(self.memory_size, dtype=np.float64)
         else:
@@ -382,7 +430,8 @@ class PrioritizedMemory(Memory):
         probs = self.sampling_probs[:self.memory_usage]
         self.sampling_probs[:self.memory_usage] = probs = probs / probs.sum()
         max_w_i = self.i_s_weights[:self.memory_usage].max()
-        self.i_s_weights[:self.memory_usage] = (self.memory_usage * probs) ** (-self.beta) / max_w_i
+        self.i_s_weights[:self.memory_usage] = (
+            self.memory_usage * probs) ** (-self.beta) / max_w_i
 
     def update(self, memory_indices, q_estimates, losses, completion):
         """
@@ -403,4 +452,3 @@ class PrioritizedMemory(Memory):
 
     def get_importance_sampling_weights(self, memory_indices):
         return self.i_s_weights[memory_indices]
-

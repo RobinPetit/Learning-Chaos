@@ -14,13 +14,16 @@ def warn_if_empty(func):
         try:
             func(*args, **kwargs)
         except IndexError:
-            print("[Warning] Could not save figure in %s: empty sequence" % func.__name__)
+            print(
+                "[Warning] Could not save figure in %s: empty sequence" %
+                func.__name__)
     return new_func
+
 
 def moving_average(sequence, n=1000):
     ma = np.cumsum(sequence, axis=0)
     ma[n:] = ma[n:] - ma[:-n]
-    return ma[n-1:] / n
+    return ma[n - 1:] / n
 
 
 class Plotter:
@@ -40,7 +43,10 @@ class Plotter:
     @staticmethod
     def notify_batch():
         if len(Plotter.Q_VALUES_CURRENT_BATCH) > 0:
-            avg_q_values = np.nan_to_num(np.asarray(Plotter.Q_VALUES_CURRENT_BATCH)).mean(axis = 0)
+            avg_q_values = np.nan_to_num(
+                np.asarray(
+                    Plotter.Q_VALUES_CURRENT_BATCH)).mean(
+                axis=0)
             Plotter.Q_VALUES.append(avg_q_values)
             Plotter.Q_VALUES_CURRENT_BATCH = list()
 
@@ -70,11 +76,13 @@ class Plotter:
 
         Plotter.plot_e_scores()
         plt.savefig(os.path.join(folder, "e_scores.png"))
-        plt.clf(); plt.close()
+        plt.clf()
+        plt.close()
 
         Plotter.plot_q_values()
         plt.savefig(os.path.join(folder, "q_values.png"))
-        plt.clf(); plt.close()
+        plt.clf()
+        plt.close()
 
     @staticmethod
     def load(folder):
@@ -108,9 +116,11 @@ class Plotter:
 class EmbeddingProjector(TSNE):
     def __init__(self, *args, **kwargs):
         TSNE.__init__(self, *args, **kwargs)
+
     def save_plot(self, hidden_repr, v_values, folder):
         projected = self.fit_transform(hidden_repr)
-        degrees = (v_values - v_values.min()) / (v_values.max() - v_values.min())
+        degrees = (v_values - v_values.min()) / \
+            (v_values.max() - v_values.min())
         colors = matplotlib.cm.jet(degrees)
         cs = [colors[i] for i in range(len(projected))]
         plt.scatter(projected[:, 0], projected[:, 1], color=cs)

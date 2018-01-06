@@ -30,7 +30,6 @@ class Environment:
                 plt.imshow(screen, cmap='gray')
                 plt.show()
 
-
     def new_game(self):
         """
         Create a new game and return the game variables
@@ -48,27 +47,21 @@ class Environment:
 
         return(self.screen, first_action, self.reward, self.terminal)
 
-
     def initialize_screens_history(self):
-
         """ initialize the history by pushing the first screen 4 (AGENT_HISTORY_LENGTH) times """
 
         self.history = FramesHistory()
         for _ in range(Parameters.AGENT_HISTORY_LENGTH):
             self.history.add_frame(self.screen)
 
-
     def add_current_screen_to_history(self):
         self.history.add_frame(self.screen)
-
 
     def get_input(self):
         return(self.history.get())
 
-
     def select_random_action(self):
         return(self.environment.action_space.sample())
-
 
     def select_smart_action(self):
         """
@@ -76,16 +69,13 @@ class Environment:
         """
         return(self.select_random_action())
 
-
     def take_action(self, action):
         self._previous_screen = self._screen
-        self._screen, self.reward, self.terminal, info = self.environment.step(action)
+        self._screen, self.reward, self.terminal, info = self.environment.step(
+            action)
         self.lives = info["ale.lives"]
 
-
-
     def process_step(self, action):
-
         """
         Take the action a certain number of times (Parameters.FRAME_SKIPPING)
         as described in the article
@@ -103,16 +93,13 @@ class Environment:
 
         return(self.state, self.reward, self.terminal)
 
-
     @property
     def screen(self):
         return(utils.preprocess_img(self._previous_screen, self._screen))
 
-
     @property
     def state(self):
         return(self.screen)
-
 
     def render(self, mode="human"):
         """
@@ -120,7 +107,6 @@ class Environment:
         """
         if(Parameters.DISPLAY):
             self.environment.render(mode=mode)
-
 
     def reset(self):
         """
@@ -130,11 +116,8 @@ class Environment:
             self.environment.reset()
             self.lives = np.inf
 
-
     def get_lives(self):
         """
         Send the number of lives of the player in the game
         """
         return self.lives
-
-

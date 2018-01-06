@@ -13,7 +13,7 @@ def y_channel(image):
     Y-channel = luminance = greyscale = (0.299*R + 0.587*G + 0.114*B)
     orb.essex.ac.uk/ce/ce316/opencv-intro.pdf
     """
-    return(np.dot(image[...,:3], [0.299, 0.587, 0.114]))
+    return(np.dot(image[..., :3], [0.299, 0.587, 0.114]))
 
 
 def screen_resize(image):
@@ -22,7 +22,7 @@ def screen_resize(image):
     Using cv2 and INTER_AREA for speed
     Original size: 210x160x3
     """
-    return(cv2.resize(image, (Parameters.IMAGE_WIDTH, Parameters.IMAGE_HEIGHT), interpolation= cv2.INTER_AREA))
+    return(cv2.resize(image, (Parameters.IMAGE_WIDTH, Parameters.IMAGE_HEIGHT), interpolation=cv2.INTER_AREA))
 
 
 def remove_flickering(previous_image, image):
@@ -35,9 +35,19 @@ def remove_flickering(previous_image, image):
     """
     return(np.asarray([previous_image, image]).max(axis=0))
 
+
 def preprocess_img(previous_image, image):
-    return np.asarray(np.round(screen_resize(y_channel(remove_flickering(previous_image, image)))), dtype=np.uint8)  # uncomment to remove flickering
-    #return np.asarray(np.round(screen_resize(y_channel(image))), dtype=np.uint8)  # uncomment to leave flickering
+    return np.asarray(
+        np.round(
+            screen_resize(
+                y_channel(
+                    remove_flickering(
+                        previous_image,
+                        image)))),
+        dtype=np.uint8)  # uncomment to remove flickering
+    # return np.asarray(np.round(screen_resize(y_channel(image))),
+    # dtype=np.uint8)  # uncomment to leave flickering
+
 
 def reward_clipper(reward):
     """

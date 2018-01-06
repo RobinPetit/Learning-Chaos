@@ -18,10 +18,13 @@ import sys
 import numpy as np
 import tensorflow as tf
 
-from random import randint  as py_randint  # faster than np for a single element. np is
-                                           # interesting to generate many numbers at once
+# faster than np for a single element. np is
+from random import randint as py_randint
+# interesting to generate many numbers at once
 
-randint = lambda a, b: py_randint(a, b-1)  # to emulate np randint behaviour: return in [a, b)
+
+# to emulate np randint behaviour: return in [a, b)
+def randint(a, b): return py_randint(a, b - 1)
 
 
 class RandomAgent:
@@ -33,7 +36,7 @@ class RandomAgent:
         all_scores = list()
         score = 0
         for sim in range(nb_simulations):
-            sys.stdout.write('\r{} out of {}'.format(sim+1, nb_simulations))
+            sys.stdout.write('\r{} out of {}'.format(sim + 1, nb_simulations))
             self.environment.reset()
             self.environment.terminal = False
             while self.environment.get_lives() > 0:
@@ -61,12 +64,23 @@ class Agent:
         # select the type of DQN based on Parameters
         dqn_type = DDDQN if Parameters.USE_DDDQN else DQN
 
-
         # initialize the DQN and target DQN (with respective placeholders)
-        self.dqn_input = tf.placeholder(tf.float32, [None, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH], name = "DQN_input")
+        self.dqn_input = tf.placeholder(tf.float32,
+                                        [None,
+                                         Parameters.IMAGE_HEIGHT,
+                                         Parameters.IMAGE_WIDTH,
+                                         Parameters.AGENT_HISTORY_LENGTH],
+                                        name="DQN_input")
         self.dqn = dqn_type(self.dqn_input, self.action_space)
 
-        self.target_dqn_input = tf.placeholder(tf.float32, [None, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH], name = "target_DQN_input")
+        self.target_dqn_input = tf.placeholder(
+            tf.float32,
+            [
+                None,
+                Parameters.IMAGE_HEIGHT,
+                Parameters.IMAGE_WIDTH,
+                Parameters.AGENT_HISTORY_LENGTH],
+            name="target_DQN_input")
         self.target_dqn = dqn_type(self.target_dqn_input, self.action_space)
 
         # initialize the tensorflow session and variables
@@ -78,7 +92,9 @@ class Agent:
         self.last_action = randint(0, self.action_space)
 
     def load_session(self):
-        save_file = path.join(Parameters.SESSION_SAVE_DIRECTORY, Parameters.SESSION_SAVE_FILENAME)
+        save_file = path.join(
+            Parameters.SESSION_SAVE_DIRECTORY,
+            Parameters.SESSION_SAVE_FILENAME)
         if path.exists(Parameters.SESSION_SAVE_DIRECTORY):
             # restore from a previously saved session
             print("Loading session from", save_file)
@@ -91,36 +107,46 @@ class Agent:
 
     def save_session(self):
         time_at_start_save = time.time()
-        sys.stdout.write('{}: [Step {}k  --  Took {:3.2f} s] '.format(datetime.now(), self.step//1000, time_at_start_save - self.last_time))
+        sys.stdout.write(
+            '{}: [Step {}k  --  Took {:3.2f} s] '.format(
+                datetime.now(),
+                self.step // 1000,
+                time_at_start_save - self.last_time))
         self.last_time = time_at_start_save
 
         Parameters.CURRENT_STEP = self.step
         a = time.time()
         Parameters.update()
         b = time.time()
-        sys.stdout.write('[{:3.2f}s for json] '.format(b-a))
+        sys.stdout.write('[{:3.2f}s for json] '.format(b - a))
 
-        save_file = path.join(Parameters.SESSION_SAVE_DIRECTORY, Parameters.SESSION_SAVE_FILENAME)
+        save_file = path.join(
+            Parameters.SESSION_SAVE_DIRECTORY,
+            Parameters.SESSION_SAVE_FILENAME)
         if not path.exists(Parameters.SESSION_SAVE_DIRECTORY):
-                makedirs(Parameters.SESSION_SAVE_DIRECTORY)
+            makedirs(Parameters.SESSION_SAVE_DIRECTORY)
         a = time.time()
         self.tf_saver.save(self.tf_session, save_file)
         b = time.time()
-        sys.stdout.write('[{:3.2f}s for tf] '.format(b-a))
+        sys.stdout.write('[{:3.2f}s for tf] '.format(b - a))
 
         a = time.time()
         Plotter.save("out")
         b = time.time()
-        sys.stdout.write('[{:3.2f}s for Plotter] '.format(b-a))
+        sys.stdout.write('[{:3.2f}s for Plotter] '.format(b - a))
         a = time.time()
         self.memory.save_memory()
         b = time.time()
-        sys.stdout.write('[{:3.2f}s for memory] '.format(b-a))
+        sys.stdout.write('[{:3.2f}s for memory] '.format(b - a))
         post_save_time = time.time()
-        sys.stdout.write('[Required {:3.2f}s to save all] '.format(post_save_time-time_at_start_save))
+        sys.stdout.write(
+            '[Required {:3.2f}s to save all] '.format(
+                post_save_time -
+                time_at_start_save))
         self.last_time = post_save_time
         elapsed_time = time.time() - self.initial_time
-        remaining_seconds = elapsed_time*(Parameters.MAX_STEPS - self.step)/(self.step - self.initial_step)
+        remaining_seconds = elapsed_time * \
+            (Parameters.MAX_STEPS - self.step) / (self.step - self.initial_step)
         print("eta: {}s".format((timedelta(seconds=remaining_seconds))))
 
     def train(self):
@@ -141,7 +167,7 @@ class Agent:
                 self.observe(state, action, reward, terminal)
 
                 if Parameters.DISPLAY:
-                    time.sleep(1.0 / Parameters.FPS) # Wait one step
+                    time.sleep(1.0 / Parameters.FPS)  # Wait one step
 
                 self.environment.render()
 
@@ -149,13 +175,13 @@ class Agent:
 
                 if self.step % 10000 == 0:
                     self.save_session()
-                if self.step % Parameters.SHORT_TERM_MEMORY_UPDATE_PERIOD == 0:  # This name is waaaaaaaaaaaaaaaay too long <3
+                # This name is waaaaaaaaaaaaaaaay too long <3
+                if self.step % Parameters.SHORT_TERM_MEMORY_UPDATE_PERIOD == 0:
                     self.memory.update_short_term()
 
                 if terminal:
                     self.environment.reset()
                     break
-
 
         self.save_session()
 
@@ -169,23 +195,36 @@ class Agent:
 
             state_t, action, reward, state_t_plus_1, terminal, i_s_weights, memory_indices = self.memory.bring_back_memories()
 
-            q_t_plus_1 = self.tf_session.run(self.target_dqn.q_values, {self.target_dqn_input: state_t_plus_1})
+            q_t_plus_1 = self.tf_session.run(
+                self.target_dqn.q_values, {
+                    self.target_dqn_input: state_t_plus_1})
             max_q_t_plus_1 = np.max(q_t_plus_1, axis=1)
 
-            target_q_t = (1. - terminal) * Parameters.DISCOUNT_FACTOR * max_q_t_plus_1 + reward
+            target_q_t = (1. - terminal) * \
+                Parameters.DISCOUNT_FACTOR * max_q_t_plus_1 + reward
 
             _, q_t, losses = self.tf_session.run([self.dqn.optimize, self.dqn.q_values, self.dqn.errors],
-            {
-                self.dqn.target_q : target_q_t,
-                self.dqn.action : action,
-                self.dqn_input : state_t,
-                self.dqn.i_s_weights : i_s_weights
+                                                 {
+                self.dqn.target_q: target_q_t,
+                self.dqn.action: action,
+                self.dqn_input: state_t,
+                self.dqn.i_s_weights: i_s_weights
             })
 
-            self.memory.update(memory_indices, np.squeeze(q_t), losses, self.get_learning_completion())
-            input_shape = (1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
+            self.memory.update(
+                memory_indices,
+                np.squeeze(q_t),
+                losses,
+                self.get_learning_completion())
+            input_shape = (
+                1,
+                Parameters.IMAGE_HEIGHT,
+                Parameters.IMAGE_WIDTH,
+                Parameters.AGENT_HISTORY_LENGTH)
             dqn_input = self.environment.get_input().reshape(input_shape)
-            q_values = self.tf_session.run(self.dqn.q_values, {self.dqn_input: dqn_input})
+            q_values = self.tf_session.run(
+                self.dqn.q_values, {
+                    self.dqn_input: dqn_input})
             Plotter.add_q_values_at_t(q_values)
         else:
             print('[WARNING] Not enough memory for a batch')
@@ -211,7 +250,8 @@ class Agent:
             if(not(nb_selected_actions % Parameters.UPDATE_FREQUENCY)):
                 self.batch_q_learning()
 
-            # Update Target DQN at frequency [Parameters.TARGET_NETWORK_UPDATE_FREQUENCY]
+            # Update Target DQN at frequency
+            # [Parameters.TARGET_NETWORK_UPDATE_FREQUENCY]
             if(not(nb_selected_actions % Parameters.TARGET_NETWORK_UPDATE_FREQUENCY)):
                 self.update_target_dqn()
 
@@ -231,19 +271,25 @@ class Agent:
         # compute epsilon at step t
         completion = self.get_learning_completion()
         if eps is None:
-            eps = Parameters.INITIAL_EXPLORATION - (completion * (Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION))
+            eps = Parameters.INITIAL_EXPLORATION - \
+                (completion * (Parameters.INITIAL_EXPLORATION - Parameters.FINAL_EXPLORATION))
         if random.random() < eps:
             # take a random action
             action = randint(0, self.action_space)
         else:
             # take a smart action
-            input_shape = (1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
+            input_shape = (
+                1,
+                Parameters.IMAGE_HEIGHT,
+                Parameters.IMAGE_WIDTH,
+                Parameters.AGENT_HISTORY_LENGTH)
             dqn_input = self.environment.get_input().reshape(input_shape)
-            action = self.tf_session.run(self.dqn.smartest_action, {self.dqn_input: dqn_input})
+            action = self.tf_session.run(
+                self.dqn.smartest_action, {
+                    self.dqn_input: dqn_input})
 
         self.last_action = action
         return(action)
-
 
     def update_target_dqn(self):
         """
@@ -254,10 +300,10 @@ class Agent:
         for learning_parameter in self.dqn.learning_parameters:
             dqn_value = self.dqn.get_value(learning_parameter, self.tf_session)
             if(dqn_value is not None):
-                self.target_dqn.set_value(learning_parameter, dqn_value, self.tf_session)
+                self.target_dqn.set_value(
+                    learning_parameter, dqn_value, self.tf_session)
             else:
                 print("Impossible to set value: None")
-
 
     def play(self):
         self.environment.render(mode='human')
@@ -278,4 +324,3 @@ class Agent:
                     self.environment.reset()
                 time.sleep(1. / Parameters.FPS)
                 self.environment.render()
-

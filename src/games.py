@@ -15,7 +15,12 @@ class Games:
         self.TENNIS = "Tennis-v0"
         self.BREAKOUT = "Breakout-v0"
 
-        self.available_games_list = [self.ASTEROIDS, self.PONG, self.SPACE_INVADERS, self.TENNIS, self.BREAKOUT]
+        self.available_games_list = [
+            self.ASTEROIDS,
+            self.PONG,
+            self.SPACE_INVADERS,
+            self.TENNIS,
+            self.BREAKOUT]
         self.action_space = {}
 
     def define_action_spaces(self):
@@ -27,11 +32,9 @@ class Games:
             # Our deep RL models are based on the assumption that action selection
             # is always binary
             actions = dummy_env.action_space
-            assert(type(actions) == gym.spaces.discrete.Discrete)
+            assert(isinstance(actions, gym.spaces.discrete.Discrete))
 
     def get_action_space(self, game):
         if len(self.action_space.values()) < len(self.available_games_list):
             self.define_action_spaces()
         return(self.action_space[game])
-
-
