@@ -256,12 +256,12 @@ class Agent:
         """
         return min(1.0, self.step / Parameters.FINAL_EXPLORATION)
 
-    def select_action(self, eps=None):
+    def select_action(self, eps=None, force=False):
         """
         The agent uses its experience and expertise acquired
         through deep learning to make intelligent actions (sometimes)
         """
-        if self.step % Parameters.FRAME_SKIPPING != 0:
+        if not force and self.step % Parameters.FRAME_SKIPPING != 0:
             return self.last_action
         # compute epsilon at step t
         completion = self.get_learning_completion()
@@ -300,14 +300,14 @@ class Agent:
                 print("Impossible to set value: None")
 
     def play(self):
+        all_scores = list()
         self.environment.render()
         self.environment.new_game()
-        # Me luv while True <3
-        while True:
-            game_reward = 0
-            # 'n me luv while True in while True <3
+        game_reward = 0
+        try:
+            # me luv while True <3
             while True:
-                action = self.select_action(eps=.1)
+                action = self.select_action(eps=.1, force=True)
                 _, reward, done = self.environment.process_step(action, add_to_plotter=False)
                 self.environment.add_current_screen_to_history()
                 self.environment.render()
@@ -319,6 +319,10 @@ class Agent:
                     game_reward += 1
                     self.environment.reset()
                     if nb_lives == 0:
+                        all_scores.append(game_reward)
                         print('Score:', game_reward)
                         game_reward = 0
-                        break
+        except KeyboardInterrupt:
+            print('')
+            print('Mean score:', np.mean(all_scores))
+            print('std       :', np.std(all_scores))
