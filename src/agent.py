@@ -23,6 +23,7 @@ from random import randint  as py_randint  # faster than np for a single element
 
 randint = lambda a, b: py_randint(a, b-1)  # to emulate np randint behaviour: return in [a, b)
 
+
 class RandomAgent:
     def __init__(self, environment):
         self.action_space = Parameters.GAMES.get_action_space(Parameters.GAME)
@@ -76,7 +77,6 @@ class Agent:
         self.initial_step = self.step
         self.last_action = randint(0, self.action_space)
 
-
     def load_session(self):
         save_file = path.join(Parameters.SESSION_SAVE_DIRECTORY, Parameters.SESSION_SAVE_FILENAME)
         if path.exists(Parameters.SESSION_SAVE_DIRECTORY):
@@ -88,7 +88,6 @@ class Agent:
             # initialize from scratch
             print("Loading new session")
             self.tf_session.run(tf.global_variables_initializer())
-
 
     def save_session(self):
         time_at_start_save = time.time()
@@ -123,7 +122,6 @@ class Agent:
         elapsed_time = time.time() - self.initial_time
         remaining_seconds = elapsed_time*(Parameters.MAX_STEPS - self.step)/(self.step - self.initial_step)
         print("eta: {}s".format((timedelta(seconds=remaining_seconds))))
-
 
     def train(self):
 
@@ -161,8 +159,6 @@ class Agent:
 
         self.save_session()
 
-
-
     def batch_q_learning(self):
         """
         Apply Q-learning updates, or minibatch updates, to samples of experience,
@@ -194,7 +190,6 @@ class Agent:
         else:
             print('[WARNING] Not enough memory for a batch')
 
-
     def observe(self, screen, action, reward, terminal):
         """
         [Article] The agent observes an image from the emulator,
@@ -225,7 +220,6 @@ class Agent:
         Returns the number of performed learning steps divided by the maximum number of steps
         """
         return min(1.0, self.step / Parameters.FINAL_EXPLORATION)
-
 
     def select_action(self, eps=None):
         """

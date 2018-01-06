@@ -4,7 +4,9 @@
 
 import os
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
 
 
 def warn_if_empty(func):
@@ -103,5 +105,14 @@ class Plotter:
                 os.remove(filepath)
 
 
-class EmbeddingProjector:
-    pass # TODO: manifold learning (Robin: PCA <3)
+class EmbeddingProjector(TSNE):
+    def __init__(self, *args, **kwargs):
+        TSNE.__init__(self, *args, **kwargs)
+    def save_plot(self, hidden_repr, v_values, folder):
+        projected = self.fit_transform(hidden_repr)
+        degrees = (v_values - v_values.min()) / (v_values.max() - v_values.min())
+        colors = matplotlib.cm.jet(degrees)
+        cs = [colors[i] for i in range(len(projected))]
+        plt.scatter(projected[:, 0], projected[:, 1], color=cs)
+        plt.title("t-distributed Stochastic Neighbor Embedding")
+        plt.savefig(os.path.join(folder, "tsne.png"))

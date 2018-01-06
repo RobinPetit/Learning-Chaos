@@ -99,7 +99,7 @@ class DQN:
         W_fc1 = self.weight_variable([7 * 7 * 64, 512])
         b_fc1 = self.bias_variable([512])
         fc1 = tf.matmul(h_conv3_flat, W_fc1)
-        h_fc1 = tf.nn.relu(fc1 + b_fc1)
+        self.h_fc1 = h_fc1 = tf.nn.relu(fc1 + b_fc1)
 
         # fully connected layer 2 (output layer)
         W_fc2 = self.weight_variable([512, self.action_space])
