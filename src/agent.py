@@ -307,7 +307,7 @@ class Agent:
         try:
             # me luv while True <3
             while True:
-                action = self.select_action(eps=.1, force=True)
+                action = self.select_action(eps=.01, force=True)
                 _, reward, done = self.environment.process_step(action, add_to_plotter=False)
                 self.environment.add_current_screen_to_history()
                 self.environment.render()
@@ -324,5 +324,8 @@ class Agent:
                         game_reward = 0
         except KeyboardInterrupt:
             print('')
+            all_scores = np.asarray(all_scores)
             print('Mean score:', np.mean(all_scores))
             print('std       :', np.std(all_scores))
+            print('min       :', np.min(all_scores))
+            print('max       :', np.max(all_scores))
