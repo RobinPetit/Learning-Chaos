@@ -52,6 +52,13 @@ def plot_figures():
     Plotter.load(OUT_FOLDER)
     Plotter.save_plots(OUT_FOLDER)
 
+def plot_conv_layers(params_path):
+    Parameters.load(params_path)
+    environment = Environment()
+    agent = Agent(environment)
+    Plotter.plot_conv_layers(agent)
+
+
 def play_random(params_path):
     Parameters.load(params_path)
     environment = Environment()
@@ -73,6 +80,7 @@ if __name__ == "__main__":
     group.add_argument('--train', action='store_true', help='Make the agent learn')
     group.add_argument('--plot', action='store_true', help='Plot the results obtained during training')
     group.add_argument('--plot-tsne', action='store_true', help='Plot t-SNE from current checkpoint and current memory')
+    group.add_argument('--plot-layers', action='store_true', help='Plot convolutional layers output from current checkpoint')
     group.add_argument('--reset-plot', action='store_true', help='Delete results obtained during training')
     group.add_argument('--random', action='store_true', help='Play 500 games with random action selection and print the mean/std')
     group.add_argument('--play', action='store_true', help='Play the game with pre-trained model')
@@ -86,6 +94,8 @@ if __name__ == "__main__":
         plot_figures()
     elif args.plot_tsne:
         plot_tsne(args.parameters_json)
+    elif args.plot_layers:
+        plot_conv_layers(args.parameters_json)
     elif args.reset_plot:
         Plotter.reset(OUT_FOLDER)
         Memory.reset(args.parameters_json)

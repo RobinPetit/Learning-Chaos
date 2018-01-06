@@ -6,6 +6,7 @@ import os
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+from parameters import Parameters
 from sklearn.manifold import TSNE
 
 
@@ -110,6 +111,38 @@ class Plotter:
             if filepath.endswith(".png") or filepath.endswith(".npy"):
                 os.remove(filepath)
 
+    @staticmethod
+    def plot_conv_layers(agent):
+        
+        folder = "./out/layers_plots/" + str(Parameters.GAME) + "/" + str(agent.step) + "/"
+
+        filters = {"conv1": 32, "conv2": 64, "conv3": 64}
+
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        # get a random state to feed the CNN
+        state_t, _, _, _, _, _, _ = agent.memory.bring_back_memories()
+
+        # we take image 0
+        img = 0
+
+        for i in range(Parameters.AGENT_HISTORY_LENGTH):
+            plt.imsave(folder + "dqn_input_" + str(i) + ".png", state_t[img,:,:,i], cmap='gray')
+        
+        # extract the output of each CNN layer for that state
+        for layer in ["conv1", "conv2", "conv3"]:
+            
+            layer_folder = folder + layer + "/"
+            if not os.path.exists(layer_folder):
+                os.makedirs(layer_folder)
+
+            layer_output = agent.tf_session.run(agent.dqn.layers[layer], {agent.dqn_input: state_t})
+
+            for filter in range(filters[layer]):
+                plt.imsave(layer_folder + layer + "_filter_" + str(filter+1) + ".png", layer_output[img,:,:,filter], cmap='gray')
+                
+                
 
 class EmbeddingProjector(TSNE):
     def __init__(self, *args, **kwargs):
