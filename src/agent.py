@@ -300,21 +300,25 @@ class Agent:
                 print("Impossible to set value: None")
 
     def play(self):
-        self.environment.render(mode='human')
+        self.environment.render()
+        self.environment.new_game()
+        # Me luv while True <3
         while True:
-            self.environment.reset()
             game_reward = 0
+            # 'n me luv while True in while True <3
             while True:
                 action = self.select_action(eps=.1)
-                _, reward, done = self.environment.process_step(action)
+                _, reward, done = self.environment.process_step(action, add_to_plotter=False)
+                self.environment.add_current_screen_to_history()
+                self.environment.render()
                 game_reward += reward
+                self.step += 1
                 if done:
+                    nb_lives = self.environment.get_lives()
                     self.environment.terminal = False
                     game_reward += 1
-                    if self.environment.get_lives() == 0:
+                    self.environment.reset()
+                    if nb_lives == 0:
                         print('Score:', game_reward)
                         game_reward = 0
                         break
-                    self.environment.reset()
-                time.sleep(1. / Parameters.FPS)
-                self.environment.render()

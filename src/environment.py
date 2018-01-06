@@ -74,7 +74,7 @@ class Environment:
         self._screen, self.reward, self.terminal, info = self.environment.step(action)
         self.lives = info["ale.lives"]
 
-    def process_step(self, action):
+    def process_step(self, action, add_to_plotter=True):
         """
         Take the action a certain number of times (Parameters.FRAME_SKIPPING)
         as described in the article
@@ -87,7 +87,8 @@ class Environment:
         if self.lives < lives_before_action:
             self.reward += Parameters.NEGATIVE_REWARD
             self.terminal = True
-            Plotter.add_episode_score(self.episode_score)
+            if add_to_plotter:
+                Plotter.add_episode_score(self.episode_score)
             self.episode_score = 0
 
         return(self.state, self.reward, self.terminal)
