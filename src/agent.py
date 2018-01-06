@@ -66,21 +66,20 @@ class Agent:
 
         # initialize the DQN and target DQN (with respective placeholders)
         self.dqn_input = tf.placeholder(tf.float32,
-                                        [None,
-                                         Parameters.IMAGE_HEIGHT,
-                                         Parameters.IMAGE_WIDTH,
-                                         Parameters.AGENT_HISTORY_LENGTH],
-                                        name="DQN_input")
+                [None,
+                 Parameters.IMAGE_HEIGHT,
+                 Parameters.IMAGE_WIDTH,
+                 Parameters.AGENT_HISTORY_LENGTH],
+                name="DQN_input")
         self.dqn = dqn_type(self.dqn_input, self.action_space)
 
         self.target_dqn_input = tf.placeholder(
             tf.float32,
-            [
-                None,
-                Parameters.IMAGE_HEIGHT,
-                Parameters.IMAGE_WIDTH,
-                Parameters.AGENT_HISTORY_LENGTH],
-            name="target_DQN_input")
+                [None,
+                 Parameters.IMAGE_HEIGHT,
+                 Parameters.IMAGE_WIDTH,
+                 Parameters.AGENT_HISTORY_LENGTH],
+                name="target_DQN_input")
         self.target_dqn = dqn_type(self.target_dqn_input, self.action_space)
 
         # initialize the tensorflow session and variables
@@ -216,11 +215,7 @@ class Agent:
                 np.squeeze(q_t),
                 losses,
                 self.get_learning_completion())
-            input_shape = (
-                1,
-                Parameters.IMAGE_HEIGHT,
-                Parameters.IMAGE_WIDTH,
-                Parameters.AGENT_HISTORY_LENGTH)
+            input_shape = (1, Parameters.IMAGE_HEIGHT, Parameters.IMAGE_WIDTH, Parameters.AGENT_HISTORY_LENGTH)
             dqn_input = self.environment.get_input().reshape(input_shape)
             q_values = self.tf_session.run(
                 self.dqn.q_values, {
@@ -285,8 +280,7 @@ class Agent:
                 Parameters.AGENT_HISTORY_LENGTH)
             dqn_input = self.environment.get_input().reshape(input_shape)
             action = self.tf_session.run(
-                self.dqn.smartest_action, {
-                    self.dqn_input: dqn_input})
+                self.dqn.smartest_action, {self.dqn_input: dqn_input})
 
         self.last_action = action
         return(action)

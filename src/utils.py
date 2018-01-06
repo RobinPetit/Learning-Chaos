@@ -41,10 +41,8 @@ def preprocess_img(previous_image, image):
         np.round(
             screen_resize(
                 y_channel(
-                    remove_flickering(
-                        previous_image,
-                        image)))),
-        dtype=np.uint8)  # uncomment to remove flickering
+                    remove_flickering(previous_image, image)))),
+        dtype=np.uint8)
     # return np.asarray(np.round(screen_resize(y_channel(image))),
     # dtype=np.uint8)  # uncomment to leave flickering
 

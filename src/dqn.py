@@ -59,10 +59,10 @@ class DQN:
         """
         # reshape input to 4d tensor [batch, height, width, channels]
         input = tf.reshape(self.state,
-                           [-1,
-                            Parameters.IMAGE_HEIGHT,
-                            Parameters.IMAGE_WIDTH,
-                            Parameters.AGENT_HISTORY_LENGTH])
+                   [-1,
+                    Parameters.IMAGE_HEIGHT,
+                    Parameters.IMAGE_WIDTH,
+                    Parameters.AGENT_HISTORY_LENGTH])
 
         # convolutional layer 1
         """
@@ -75,11 +75,7 @@ class DQN:
         conv1 = tf.nn.conv2d(
             input,
             W_conv1,
-            strides=[
-                1,
-                4,
-                4,
-                1],
+            strides=[1, 4, 4, 1],
             padding='VALID')  # would 'SAME' also work ?
         h_conv1 = tf.nn.relu(conv1 + b_conv1)
 
@@ -93,8 +89,7 @@ class DQN:
         W_conv2 = self.weight_variable([4, 4, 32, 64])
         b_conv2 = self.bias_variable([64])
         conv2 = tf.nn.conv2d(
-            h_conv1, W_conv2, strides=[
-                1, 2, 2, 1], padding='VALID')
+            h_conv1, W_conv2, strides=[1, 2, 2, 1], padding='VALID')
         h_conv2 = tf.nn.relu(conv2 + b_conv2)
 
         # output of conv 2 is of shape [-1 x 9 x 9 x 64]
@@ -107,8 +102,7 @@ class DQN:
         W_conv3 = self.weight_variable([3, 3, 64, 64])
         b_conv3 = self.bias_variable([64])
         conv3 = tf.nn.conv2d(
-            h_conv2, W_conv3, strides=[
-                1, 1, 1, 1], padding='VALID')
+            h_conv2, W_conv3, strides=[1, 1, 1, 1], padding='VALID')
         h_conv3 = tf.nn.relu(conv3 + b_conv3)
 
         # output of conv 3 is of shape [-1 x 7 x 7 x 64]
@@ -246,8 +240,7 @@ class DQN:
         """
         Initialize bias variables of a specific shape using a constant
         """
-        bias_var = tf.constant(
-            0.1, shape=shape)  # 0 used in the other implementation
+        bias_var = tf.constant(0.1, shape=shape)
         return(tf.Variable(bias_var))
 
     def get_value(self, var_name, tf_session):
@@ -279,6 +272,5 @@ class DQN:
             tf_session.run(
                 self.assign_operator[var_name], {
                     self.l_param_input[var_name]: new_value})
-
         else:
             print("Thou shall only assign learning parameters!")

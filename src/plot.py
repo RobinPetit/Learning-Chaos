@@ -44,9 +44,7 @@ class Plotter:
     def notify_batch():
         if len(Plotter.Q_VALUES_CURRENT_BATCH) > 0:
             avg_q_values = np.nan_to_num(
-                np.asarray(
-                    Plotter.Q_VALUES_CURRENT_BATCH)).mean(
-                axis=0)
+                np.asarray(Plotter.Q_VALUES_CURRENT_BATCH)).mean(axis=0)
             Plotter.Q_VALUES.append(avg_q_values)
             Plotter.Q_VALUES_CURRENT_BATCH = list()
 

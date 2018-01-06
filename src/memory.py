@@ -153,11 +153,7 @@ class ShortTermBalancedMemory(ShortTermMemory):
 
 class Memory:
 
-    def __init__(
-            self,
-            destination=DEFAULT_MEMMAP_PATH,
-            load=True,
-            stm_type=ShortTermMemory):
+    def __init__(self, destination=DEFAULT_MEMMAP_PATH, load=True, stm_type=ShortTermMemory):
         """
         :param destination: str
             Path to the file where the long-term experience must be stored
@@ -254,10 +250,8 @@ class Memory:
             state_index = state_index % self.memory_usage
 
             if(state_index >= Parameters.AGENT_HISTORY_LENGTH - 1):
-                state = self.screens[(state_index -
-                                      Parameters.AGENT_HISTORY_LENGTH) +
-                                     1: state_index +
-                                     1, ...]
+                state = self.screens[
+                    (state_index - Parameters.AGENT_HISTORY_LENGTH) + 1: state_index + 1, ...]
             else:
                 # negative indices don't work well with slices in numpy..
                 state = self.screens[np.array(
@@ -349,6 +343,7 @@ class Memory:
 
 
 class BalancedMemory(Memory):
+
     def __init__(self, destination=DEFAULT_MEMMAP_PATH, load=True):
         Memory.__init__(
             self,
@@ -366,13 +361,7 @@ class PrioritizedMemory(Memory):
     Schaul et al.
     """
 
-    def __init__(
-            self,
-            alpha=1.0,
-            beta_0=2.0,
-            epsilon=0.0,
-            p_0=1.0,
-            destination="mem.dat"):
+    def __init__(self, alpha=1.0, beta_0=2.0, epsilon=0.0, p_0=1.0, destination="mem.dat"):
         """
         :param alpha: float
             Degree of prioritization

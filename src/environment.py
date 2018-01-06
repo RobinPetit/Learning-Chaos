@@ -71,8 +71,7 @@ class Environment:
 
     def take_action(self, action):
         self._previous_screen = self._screen
-        self._screen, self.reward, self.terminal, info = self.environment.step(
-            action)
+        self._screen, self.reward, self.terminal, info = self.environment.step(action)
         self.lives = info["ale.lives"]
 
     def process_step(self, action):

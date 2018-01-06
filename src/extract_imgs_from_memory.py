@@ -38,10 +38,7 @@ def save_to_file(imgs: int, path: str):
 memory = np.memmap(
     MEMORY_PATH,
     mode="r",
-    shape=(
-        MEM_SIZE,
-        84,
-        84),
+    shape=(MEM_SIZE, 84, 84),
     dtype=STATE_TYPE)
 if STATE_TYPE == np.float16:
     memory = float16_to_int8(memory[:SUB_ARRAY_SIZE])
