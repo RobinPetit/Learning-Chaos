@@ -6,8 +6,14 @@ import os
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+
+import gym
 from parameters import Parameters
 from sklearn.manifold import TSNE
+
+# Set to True if the Q values plot should display the individual
+# Q values in addition to the mean
+PLOT_INDIVIDUAL_Q_VALUES = False
 
 
 def warn_if_empty(func):
@@ -62,9 +68,12 @@ class Plotter:
     def plot_q_values():
         avg_q_values = np.asarray(Plotter.Q_VALUES)
         smoothed = moving_average(avg_q_values, n=5000).T
-        for idx, smoothed_q_value in enumerate(smoothed):
-            plt.plot(smoothed_q_value, label='Action {}'.format(idx))
-        plt.legend()
+        if PLOT_INDIVIDUAL_Q_VALUES:
+            action_names = gym.envs.make(Parameters.GAME).unwrapped.get_action_meanings()
+            for idx, smoothed_q_value in enumerate(smoothed):
+                plt.plot(smoothed_q_value, label=action_names[idx])
+        plt.plot(np.squeeze(smoothed.mean(axis=0)), label='MEAN')
+        plt.legend(loc='best')
         plt.xlabel("Number of batches")
         plt.ylabel("Average Q-values")
 
@@ -113,7 +122,7 @@ class Plotter:
 
     @staticmethod
     def plot_conv_layers(agent):
-        
+
         folder = "./out/layers_plots/" + str(Parameters.GAME) + "/" + str(agent.step) + "/"
 
         filters = {"conv1": 32, "conv2": 64, "conv3": 64}
@@ -129,10 +138,10 @@ class Plotter:
 
         for i in range(Parameters.AGENT_HISTORY_LENGTH):
             plt.imsave(folder + "dqn_input_" + str(i) + ".png", state_t[img,:,:,i], cmap='gray')
-        
+
         # extract the output of each CNN layer for that state
         for layer in ["conv1", "conv2", "conv3"]:
-            
+
             layer_folder = folder + layer + "/"
             if not os.path.exists(layer_folder):
                 os.makedirs(layer_folder)
@@ -141,8 +150,8 @@ class Plotter:
 
             for filter in range(filters[layer]):
                 plt.imsave(layer_folder + layer + "_filter_" + str(filter+1) + ".png", layer_output[img,:,:,filter], cmap='gray')
-                
-                
+
+
 
 class EmbeddingProjector(TSNE):
     def __init__(self, *args, **kwargs):
