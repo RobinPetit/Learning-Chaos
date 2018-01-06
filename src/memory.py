@@ -7,7 +7,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import os
-from shutil import copyfile, move
 import shelve
 
 from time import time
@@ -15,7 +14,8 @@ from time import time
 DEFAULT_MEMMAP_PATH = "mem.dat"
 DEFAULT_SAVE_PATH = "memory-" + Parameters.GAME + '.shelf'
 
-STATE_TYPE = np.float16
+#STATE_TYPE = np.float16
+STATE_TYPE = np.uint8
 
 class ShortTermMemory:
 
@@ -49,6 +49,7 @@ class ShortTermMemory:
         Sample a random subset of the memmap to keep in RAM
         """
         a = time()
+        self.buff_size = Parameters.SHORT_TERM_MEMORY_SIZE
         self.base_idx = np.random.randint(self.parent_memory.memory_usage - self.buff_size)
         self.screens_buffer[:, ...] = self.long_term_mem[self.base_idx:(self.base_idx+self.buff_size), ...]
         self.rewards[:] = self.parent_memory.rewards[self.base_idx:(self.base_idx+self.buff_size)]
@@ -59,10 +60,10 @@ class ShortTermMemory:
         """
         Load part of the LTM map into STM if LTM is too big or load the whole LTM in STM if size fits
         """
-        self.use_buffer = self.parent_memory.memory_usage - self.history_length > self.buff_size
+        self.use_buffer = self.parent_memory.memory_usage - self.history_length > Parameters.SHORT_TERM_MEMORY_SIZE
         if not self.use_buffer:
-            # TODO: update this properly
-            self.random_indices = np.arange(self.parent_memory.memory_usage)
+            self.buff_size = self.parent_memory.memory_usage
+            self.base_idx = 0
             self.screens_buffer[:self.parent_memory.memory_usage] = self.long_term_mem[:self.parent_memory.memory_usage]
             self.rewards[:self.parent_memory.memory_usage] = self.parent_memory.rewards[:self.parent_memory.memory_usage]
         else:
@@ -91,12 +92,6 @@ class ShortTermMemory:
 
     def get_state(self, state_idx):
         state = self.screens_buffer[(state_idx - self.history_length) + 1 : state_idx + 1, ...]
-
-        """
-        for img in state:
-            plt.imshow(np.asarray(np.round(img * 255), dtype=np.uint8))
-            plt.show()
-        """
 
         state = np.swapaxes(state, 0, 1)
         state = np.swapaxes(state, 1, 2)

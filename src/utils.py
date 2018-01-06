@@ -36,9 +36,8 @@ def remove_flickering(previous_image, image):
     return(np.asarray([previous_image, image]).max(axis=0))
 
 def preprocess_img(previous_image, image):
-    #return(screen_resize(y_channel(remove_flickering(previous_image, image))/255))
-    #return(screen_resize(y_channel(image)/255))
-    return(screen_resize(y_channel(remove_flickering(previous_image, image))/255))
+    return np.asarray(np.round(screen_resize(y_channel(remove_flickering(previous_image, image)))), dtype=np.uint8)  # uncomment to remove flickering
+    #return np.asarray(np.round(screen_resize(y_channel(image))), dtype=np.uint8)  # uncomment to leave flickering
 
 def reward_clipper(reward):
     """

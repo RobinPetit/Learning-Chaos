@@ -3,6 +3,7 @@ from shutil import copyfile
 from os import remove
 from os.path import exists
 import imageio
+from memory import STATE_TYPE
 
 MEMORY_PATH = "mem.dat"
 TMP_MEMORY_PATH = MEMORY_PATH + ".copy"
@@ -29,6 +30,7 @@ def save_to_file(imgs: int, path: str):
         output_mp4.append_data(img)
     output_mp4.close()
 
-memory = np.memmap(MEMORY_PATH, mode="r", shape=(MEM_SIZE, 84, 84), dtype=np.float16)
-memory = float16_to_int8(memory[:SUB_ARRAY_SIZE])
+memory = np.memmap(MEMORY_PATH, mode="r", shape=(MEM_SIZE, 84, 84), dtype=STATE_TYPE)
+if STATE_TYPE == np.float16:
+    memory = float16_to_int8(memory[:SUB_ARRAY_SIZE])
 save_to_file(memory[20:1020], OUTPUT_PATH)
