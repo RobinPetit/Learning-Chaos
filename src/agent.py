@@ -4,7 +4,7 @@
 
 from utils import reward_clipper
 from environment import Environment
-from memory import Memory, PrioritizedMemory, BalancedMemory
+from memory import Memory, PrioritizedMemory
 from parameters import Parameters
 from plot import Plotter
 from dqn import DQN
@@ -113,7 +113,7 @@ class Agent:
                 time_at_start_save - self.last_time))
         self.last_time = time_at_start_save
 
-        Parameters.CURRENT_STEP = self.step
+        Parameters.add_attr("CURRENT_STEP", self.step)
         a = time.time()
         Parameters.update()
         b = time.time()

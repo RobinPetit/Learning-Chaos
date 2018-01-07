@@ -131,29 +131,9 @@ class ShortTermMemory:
         return selected_memories, self.state_t, self.state_t_plus_1
 
 
-class ShortTermBalancedMemory(ShortTermMemory):
-
-    def __init__(self, *args, **kwargs):
-        ShortTermMemory.__init__(self, *args, **kwargs)
-
-    def sample_memory(self, nb_samples=1):
-        """
-        :param nb_samples: int
-            Number of integers to return
-        """
-        rewards = self.rewards[:self.buff_size - 1]
-        weights = np.ones(self.buff_size - 1, dtype=np.float)
-        weights[rewards < 0] *= 15
-        weights[rewards > 0] *= 10
-        weights /= weights.sum()
-        indices = np.random.choice(self.buff_size - 1, nb_samples, p=weights)
-        # print(list(self.rewards[indices]))
-        return indices
-
-
 class Memory:
 
-    def __init__(self, destination=DEFAULT_MEMMAP_PATH, load=True, stm_type=ShortTermMemory):
+    def __init__(self, destination=DEFAULT_MEMMAP_PATH, load=True, use_memmap=True, stm_type=ShortTermMemory):
         """
         :param destination: str
             Path to the file where the long-term experience must be stored
@@ -164,25 +144,31 @@ class Memory:
         """
 
         self.memory_filepath = destination
-
+        self.use_memmap = use_memmap
         self.memory_size = Parameters.LONG_TERM_MEMORY_SIZE
 
         screens_shape = (
             self.memory_size,
             Parameters.IMAGE_HEIGHT,
             Parameters.IMAGE_WIDTH)
-        if os.path.isfile(self.memory_filepath):
-            self.screens = np.memmap(
-                self.memory_filepath,
-                mode="r+",
-                shape=screens_shape,
-                dtype=STATE_TYPE)
+        if self.use_memmap:
+            if os.path.isfile(self.memory_filepath):
+                self.screens = np.memmap(
+                    self.memory_filepath,
+                    mode="r+",
+                    shape=screens_shape,
+                    dtype=STATE_TYPE)
+            else:
+                self.screens = np.memmap(
+                    self.memory_filepath,
+                    mode="w+",
+                    shape=screens_shape,
+                    dtype=STATE_TYPE)
         else:
-            self.screens = np.memmap(
-                self.memory_filepath,
-                mode="w+",
-                shape=screens_shape,
-                dtype=STATE_TYPE)
+            if os.path.isfile(self.memory_filepath):
+                self.screens = np.load(self.memory_filepath, allow_pickle=False)
+            else:
+                self.screens = np.empty(screens_shape, dtype=STATE_TYPE)
         self.short_term_memory = stm_type(self.screens, self)
         self.minibatch_size = Parameters.MINIBATCH_SIZE
         self.state_shape = (
@@ -202,7 +188,10 @@ class Memory:
         shelf["actions"] = self.actions
         shelf["rewards"] = self.rewards
         shelf["terminals"] = self.terminals
-        self.screens.flush()
+        if self.use_memmap:
+            self.screens.flush()
+        else:
+            np.save(self.memory_filepath, self.screens, allow_pickle=False)
 
     def load_memory(self, path=DEFAULT_SAVE_PATH):
         ret = True
@@ -287,26 +276,6 @@ class Memory:
         assert(self.memory_usage > Parameters.AGENT_HISTORY_LENGTH)
 
         selected_memories, self.state_t, self.state_t_plus_1 = self.short_term_memory.bring_back_memories()
-
-        # I would't dare to remove this :broken_heart:  --> How to use
-        # PrioritizedMemory with this?
-        """
-        selected_memories = []
-
-        while(len(selected_memories) < self.minibatch_size):
-
-            memories = self.sample_memory(self.minibatch_size - len(selected_memories))
-
-            for memory in memories:
-                if(not self.includes_terminal(memory) and not self.includes_current_memory_index(memory)):
-                    self.state_t[len(selected_memories), ...] = self.get_state(memory-1)
-                    self.state_t_plus_1[len(selected_memories), ...] = self.get_state(memory)
-                    selected_memories.append(memory)
-
-        # for compatibility issues
-        selected_memories = np.array(selected_memories)
-        """
-
         return(
             self.state_t,
             self.actions[selected_memories],
@@ -342,16 +311,6 @@ class Memory:
             os.remove(path)
 
 
-class BalancedMemory(Memory):
-
-    def __init__(self, destination=DEFAULT_MEMMAP_PATH, load=True):
-        Memory.__init__(
-            self,
-            destination=destination,
-            load=load,
-            stm_type=ShortTermBalancedMemory)
-
-
 class PrioritizedMemory(Memory):
     """
     References
@@ -378,12 +337,34 @@ class PrioritizedMemory(Memory):
             Path to the file where the long-term experience must be stored
             Note: Files cannot be larger than 2 Gb in 32-bit architectures
         """
-        Memory.__init__(self, destination=destination, load=False)
+        Memory.__init__(self, destination=destination, load=False, use_memmap=False)
         self.alpha = alpha
         self.beta = self.beta_0 = beta_0
         self.epsilon = epsilon
         self.p_0 = p_0
         self.load_memory()
+
+    def bring_back_memories(self):
+        assert(self.memory_usage > Parameters.AGENT_HISTORY_LENGTH)
+        selected_memories = []
+        while len(selected_memories) < self.minibatch_size:
+            memories = self.sample_memory(
+                self.minibatch_size - len(selected_memories))
+            for state_idx in memories:
+                if not self.includes_terminal(state_idx):
+                    self.state_t[len(selected_memories), ...] = self.get_state(state_idx)
+                    self.state_t_plus_1[len(selected_memories), ...] = self.get_state(state_idx + 1)
+                    selected_memories.append(state_idx)
+        selected_memories = np.array(selected_memories)
+        return(
+            self.state_t,
+            self.actions[selected_memories],
+            self.rewards[selected_memories],
+            self.state_t_plus_1,
+            self.terminals[selected_memories],
+            self.get_importance_sampling_weights(selected_memories),
+            selected_memories
+        )
 
     def save_memory(self, path=DEFAULT_SAVE_PATH):
         Memory.save_memory(self, path)
@@ -413,7 +394,8 @@ class PrioritizedMemory(Memory):
     def sample_memory(self, nb_samples=1):
         self.update_probs_and_weights()
         probs = self.sampling_probs[:self.memory_usage]
-        return np.random.choice(self.memory_usage, size=nb_samples, p=probs)
+        indices = np.random.choice(self.memory_usage, size=nb_samples, p=probs)
+        return indices
 
     def update_probs_and_weights(self):
         probs = self.sampling_probs[:self.memory_usage]
