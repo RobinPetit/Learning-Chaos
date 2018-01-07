@@ -3,6 +3,8 @@
 \usepackage[utf8]{inputenc}
 \usepackage[sort, colon]{natbib}
 \usepackage{alifexi}
+\usepackage{float}
+\usepackage{subcaption}
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -19,7 +21,7 @@
 \author{C\'{e}dric Simar, Antoine Passemiers, Stanislas Gueniffey \and Robin Petit \\
 \mbox{}\\
 Universit\'{e} Libre de Bruxelles \\
-\{Cedric.Simar, apassemi, sgueniff, robpetit\}@ulb.ac.be}
+\{csimar, apassemi, sgueniff, robpetit\}@ulb.ac.be}
 
 \begin{document}
 \maketitle
@@ -62,8 +64,28 @@ inspired by the notion of receptive field introduced by Hubel and Wiesel~\citep{
 Let $Q(s, a; \theta_i)$ be the Q-value approximation function represented by the neural network, parameterized by its weights $\theta$ at time step $i$.
 
 The huge breakout effect of the DQN was that it has shown to be a first step towards general artificial intelligence~\citep{togelius2015ai}, meaning an
-algorithm that is not only good at learning one particular task but several of them. Even though the DQN needs to be trained for about a million steps
-on each Atari game, it gets good at most of them and better than human at 22 of the 49 experimented~\citep{mnih2015human}.
+algorithm that is not only good at learning one particular task but several of them. Even though the DQN needs to be trained for tens of millions steps
+on each Atari game, it gets good at most of them and better than human (considered $75\%$ of human score or more) at 22 of the 49 experimented~\citep{mnih2015human}.
+
+Finally it has been pointed out by the original DQN conceptors that DQN has an ability to learn by acquiring experience generated from policies
+other than its own. \todo{On peut en faire qqch pas vrai ?}
+
+\section{Methods}
+
+Our source code is available at \url{https://github.com/RobinPetit/Learning-Chaos}.
+
+We developed our models with the support of the Arcade Learning Environment~\citep{bellemare13arcade}. This gives the opportunity to either
+retrieve the environment state as a raw image (for deep reinforcement learning research) or as a state of the RAM (for classic reinforcement learning
+applications). Because of the very high dimensionality of raw images, we applied some preprocessing steps on them. These steps are also aimed at
+removing some artifacts produced by the Atari architecture. More specifically, the flickering effect implies that some game sprites only appear
+in one out of two frames. An easy solution consists in taking the pixelwise maximum value between the current frame and the previous frame.
+Then the sample size has been reduced by a factor of three by mapping RGB values to the pixel luminance, using the following formula:
+\begin{equation}
+    \text{Luminance} = 0.299 \times R + 0.587 \times G + 0.114 \times B.
+\end{equation}
+
+After mapping the three color channels to a unique channel, the number of pixels has also been reduced. Each input image as been rescaled to a
+$84 \times 84$ pixel grid.
 
 Since we are handling visual features, we used screen frames as environment state representations. Each frame is a (210 x 160) color image sampled at
 a frequency of 60 Hz. We denote the environment state at current step $t$ by $s_t$. The agent gathers experience by incorporating new experience samples
@@ -86,29 +108,9 @@ random action selection) using a normalized performance metric. The latter is fo
 \begin{equation}
     P = 100 \times (\text{score} - RAS) / (HS - RAS),
 \end{equation}
-where P designates the normalized performance, RAS the random action selection score, and HS the human score obtained in average by our
-Space Invaders professional gamer \textbf{Stanislas Gueniffey}. By normalizing in this manner, the random action selection score RAS results in
-a normalized performance of 0\% and the human score results in a normalized performance of 100\%.
-
-Finally it has been pointed out by the original DQN conceptors that DQN has an ability to learn by acquiring experience generated from policies
-other than its own. \todo{On peut en faire qqch pas vrai ?}
-
-\section{Methods}
-
-Our source code is available at \url{https://github.com/RobinPetit/Learning-Chaos}.
-
-We developed our models with the support of the Arcade Learning Environment~\citep{bellemare13arcade}. This gives the opportunity to either
-retrieve the environment state as a raw image (for deep reinforcement learning research) or as a state of the RAM (for classic reinforcement learning
-applications). Because of the very high dimensionality of raw images, we applied some preprocessing steps on them. These steps are also aimed at
-removing some artifacts produced by the Atari architecture. More specifically, the flickering effect implies that some game sprites only appear
-in one out of two frames. An easy solution consists in taking the pixelwise maximum value between the current frame and the previous frame.
-Then the sample size has been reduced by a factor of three by mapping RGB values to the pixel luminance, using the following formula:
-\begin{equation}
-    \text{Luminance} = 0.299 \times R + 0.587 \times G + 0.114 \times B.
-\end{equation}
-
-After mapping the three color channels to a unique channel, the number of pixels has also been reduced. Each input image as been rescaled to a
-$84 \times 84$ pixel grid.
+where P designates the normalized performance, RAS the random action selection score, and HS the human score obtained in average by Google's professional
+game tester after a training period of 2 hours.  By normalizing in this manner, the random action selection score RAS results in a normalized performance
+of 0\% and the human score results in a normalized performance of 100\%.
 
 The perceived rewards of the agent have all been reduced to be either $-1$ for a negative reward, $0$ for a session with no reward, and $+1$
 for a positive reward, i.e. at any time $t$: $r_t \in \{-1, 0, +1\}$. No intermediate or larger reward is available to the learning algorithm.
@@ -136,12 +138,12 @@ squared error on a small neighbourhood of $0$, and by the absolute value outside
 	                                                            \delta\left(\abs x - \frac 12\delta\right) &\text{ otherwise.}\end{cases}
 \end{equation}
 
-The interest of the Hubert loss is to bound the gradient of the loss between $-1$ and $+1$, and has (\todo {probably}) been shown to increase
-stability.~\todo{check if this has a proper reference or drop it}
+The interest of the Hubert loss is to bound the gradient of the loss between $-1$ and $+1$, and is claimed to increase stability~\citep{mnih2015human},
+yet no further investigation has been performed.
 
 \subsection{Neural Network architecture}
 
-The Deep Q-Network is a Convolutional Neural Network (CNN) composed of three convolutional layers followed by a fully-connected layer, 
+The Deep Q-Network is a Convolutional Neural Network (CNN) composed of three convolutional layers followed by a fully-connected layer,
 leading to the final output fully-connected layer.
 Between each of these units a non-linear function is applied, which result in Rectifier Linear Units (ReLU) \citep{krizhevsky2012imagenet}, but Exponential Linear Units (ELU) could
 also be used since it has been shown to be more performant in classification and decision tasks~\citep{DBLP:journals/corr/ClevertUH15}, but also
@@ -152,8 +154,8 @@ The first convolutional layer outputs 32 $20 \times 20$ images from a $84 \times
 applies 64 filters of size $3 \times 3$ with stride $1$ on the 64 subimages of the previous layer to output $7 \times 7$ images.
 
 These are then reshaped into a column vector (of size $7 \times 7 \times 64 = 3136$) and fed into the first fully-connected layer with 512 neurons,
-which is then connected to the last layer (again fully-connected) which corresponds to the output with the same size as the action space (6 in the
-case of Space Invaders).
+which is then connected to the last layer (again fully-connected) which corresponds to the output with the same size as the action space (4 in the
+case of Breakout: \textit{NOOP}, \textit{FIRE}, \textit{LEFT} and \textit{RIGHT}).
 
 We also reimplemented a Dueling Deep Q-Network (DDQN) in which the high-level representation of states and action values are separated.
 For this purpose,the same convolutional architecture as before was kept, but the output of the last convolutionel layer was split in two streams of
@@ -163,9 +165,9 @@ contains a dense representation of the state value and is fully-connected to a s
 
 The last layer of the DDQN outputs Q-value estimates by evaluating the following formula:
 \begin{multline}
-    Q(s, a; \theta, \alpha, \beta) = V(s; \theta, \beta) + \\ ( A(s, a; \theta, \alpha) - \frac{1}{|\mathcal{A}|} \Sigma_{a'} A(s, a'; \theta, \alpha) )
+    Q(s, a; \theta, \alpha, \beta) = V(s; \theta, \beta) + \\ \left(A(s, a; \theta, \alpha) - \frac{1}{|\mathcal{A}|} \sum_{a'} A(s, a'; \theta, \alpha)\right)
 \end{multline}
-where $V$ is the output of the state-value stream, $A$ is the output of the advantage-per-action stream, $s$ is the input state (image), 
+where $V$ is the output of the state-value stream, $A$ is the output of the advantage-per-action stream, $s$ is the input state (image),
 $\alpha$ are the parameters of the state-value stream's fully-connected layer, $\beta$ are the parameters of the state-value stream's
 fully-connected layer, $\theta$ are the parameters of the rest of the network, and $\mathcal{A}$ is the discrete action space.
 
@@ -178,7 +180,8 @@ and each edge is a data tensor.
 
 In order to reduce oscillation in $Q$ estimations, two separate neural networks have been used: the first one, denoted $Q$ and called the \textit{action-value}
 network is the one used in action prediction, and the second one denotes $\hat Q$ and called the \textit{target action-value} network is used when
-updating the weights. This particular method holds for both DQN and DDQN The parameters of $Q$ are denoted by $\theta$ as previously, and the parameters of $\hat Q$ are denoted by $\theta^-$.
+updating the weights. This particular method holds for both DQN and DDQN The parameters of $Q$ are denoted by $\theta$ as previously, and the parameters of
+$\hat Q$ are denoted by $\theta^-$.
 
 Every 4 steps, at time $t$, a minibatch of 32 past experiences $\left\{(s_{t_j}, a_{t_j}, r_{t_j}, s_{t_j+1})\right\}_{j=1}^{32}$ is selected uniformly from the
 memory in order to perform a Stochastic Gradient Descent (SGD), thus the average of the gradients of the loss function on each experience is used to update
@@ -186,31 +189,94 @@ the weights. As mentioned above, the loss function is a Huber loss function and 
 \begin{equation}
 	H_1\left(y_j - Q(s_{t_j}, a_{t_j}; \theta)\right),
 \end{equation}
-with $y_j$ set either to $r_j$ if $s_{t_j}$ is a final state (i.e. either the loss of a game or a forced end of episode) or to
-$r_j + \gamma\max_{a' \in A(s_{t_j})}\hat Q(s_{j+1}, a'; \theta^-)$ otherwise; therefore using the target action-value network.
+with $y_j$ set either to $r_{t_j}$ if $s_{t_j}$ is a final state (i.e. either the loss of a game or a forced end of episode) or to
+$r_{t_j} + \gamma\max_{a' \in A(s_{t_j})}\hat Q(s_{t_j+1}, a'; \theta^-)$ otherwise; therefore using the target action-value network.
 
 The $\hat Q$ target action-value network is then copied back from the action value network $Q$ every 10,000 steps.
 
 \section{Results}
 
-\begin{figure*}
-  \includegraphics[width=\textwidth]{figures/dqn_uniform}
-  \caption{(Left) Total score per episode during a learning phase of 1.000.000 steps, smoothed using a moving average with a window of size 2000.
-     (Right) Estimation of Q, averaged across actions, for each batch during a learning phase of 1.000.000 steps and smoothed using a moving average
-      with a window of size 2000.}
+\begin{figure*}[!t]
+	\vspace{-1cm}
+	\begin{subfigure}{.47\textwidth}
+		\includegraphics[width=\textwidth]{figures/dqn_uniform_e_scores}
+		\subcaption{Total score per episode during a learning phase of 16,000,000 steps, smoothed using a moving average with a window of size 1000.}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{.47\textwidth}
+		\includegraphics[width=\textwidth]{figures/dqn_uniform_q_values}
+		\subcaption{Estimation of $Q$, averaged across actions, for each batch during a learning phase of 16,000,000 steps and smoothed using a moving
+			average with a window of size 5000.}
+	\end{subfigure}
+	\caption{Episode score and $Q$ values estimation of the DQN after 16,000,000 steps of training on Breakout.\label{fig:dqn uniform}}
 \end{figure*}
 
-Figure~\ref{fig:t-SNE}\todo{Link the right figure} shows a 2-dimensional representation of the last fully connected hidden layer, i.e. a 512-dimensional
+Figure~\ref{fig:dqn uniform} shows the results of the DQN after 16,000,000 steps of training. One can observe that the first 15,000 batches didn't help
+increasing the $Q$ estimates: the internal representation was being built up. Also, the score per episode is very low at first since the agent plays
+randomly, a million steps were required for $\epsilon$ to linearly decrease from $1$ to $0.1$.
+
+After this phase, the estimates increase and so does the score per episode, until they both reached stability around 11,000,000 steps.
+
+\begin{table}[!h]
+	\centering
+	% std of Random is 1.27 & std of DQN is 22.81
+	\begin{tabular}{l|l|l|l}
+		Model & Random & Human & DQN \\ \hline \hline
+		Score & $1.31$ & $31.8$ & $39.88$ \\ \hline
+		P &  $0\%$ & $100\%$ & $126.83\%$
+	\end{tabular}
+	\caption{Score and Performance on Breakout (averaged on 100 simulations with $\varepsilon=5\%$ and with one action decision per frame). The DQN has been
+	trained during 16,000,000 steps.
+	\todo{Ajouter scores Prioritized + DDQN et le temps d'apprentissage}\label{tab:scores breakout}}
+\end{table}
+
+Table~\ref{tab:scores breakout} shows that the DQN performed better than human after 16,000,000 training steps, with a performance of $126.83\%$.
+
+Figure~\ref{fig:t-SNE DQN uniform} shows a 2-dimensional representation of the last fully connected hidden layer, i.e. a 512-dimensional
 vector. The method of \textit{projection} that was used is t-SNE~\citep{maaten2008visualizing}, which is part of the manifold learning algorithms, also
 called \textit{Nonlinear Dimensionality Reduction}~\citep{lee2007nonlinear}.
 
 The implementation of t-SNE that was used is the one from Scikit-Learn~\citep{scikit-learn}, the Python library.
 
-  \todo{Magnifique plot T-SNE avec des couleurs et des gifs et des trucs qui font beep et qui font boop}~\citep{wattenberg2016how}
+  \todo{Magnifique plot T-SNE avec des couleurs et des gifs et des trucs qui font beep et qui font boop. Robin est dessus.}~\citep{wattenberg2016how}
+
+\begin{figure}
+	\includegraphics[width=.5\textwidth]{figures/TSNE_dqn_uniform}
+	\caption{\todo{Replace with correct plot}.\label{fig:t-SNE DQN uniform}}
+\end{figure}
+
+Figure~\ref{fig:dqn uniform scores dist} shows the distribution of scores when letting the DQN play for 100 games. We can see that despite having an
+average score of \todo{XXX}, the DQN outputs score ranging from 7 to 219. This means that some states haven't been encountered enough for the
+DQN to know significantly which one is better, and can also be slightly related to the $\epsilon$-greedy policy, yet $\epsilon$ is quite small,
+and more importantly, the agent selects the action at each frame. This highest score of 219 is probably due to a non-anticipated breaking through
+the brick layer, leading to the ball destroying the upper layer.
+
+\begin{figure}
+	\includegraphics[width=.5\textwidth]{figures/dqn_uniform_score_distribution}
+	\caption{Distribution of the scores performed by the DQN on 100 plays.\label{fig:dqn uniform scores dist}}
+\end{figure}
+
+\begin{figure*}{!b}
+	\begin{subfigure}{.47\textwidth}
+		\includegraphics[width=\textwidth]{figures/dqn_uniform_e_scores}
+		\subcaption{Total score per episode of the DDQN during its learning phase, smoothed using a moving average of size \todo{XXX}.}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{.47\textwidth}
+		\includegraphics[width=\textwidth]{figures/dqn_uniform_q_values}
+		\caption{Estimation of $Q$ by the DDQN, averaged across actions, for each batch during its learning phase and smoothed using a moving average
+		with a window of size \todo{XXX}.}
+	\end{subfigure}
+	\caption{\todo{Ajouter les plots DDQN et remplacer les paths des includegraphics}.\label{fig:ddqn uniform}}
+\end{figure*}
 
 \section{Discussion}
 
   \todo{Amélioration: Double dueling DQN}~\citep{DBLP:journals/corr/WangFL15}
+
+\section{Conclusion}
+
+	\todo{Ajouter ordre de performance des 3 tests}
 
 \section{Acknowledgements}
 
