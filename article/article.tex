@@ -10,8 +10,10 @@
 \usepackage{amssymb}
 \usepackage{commath}
 
-\usepackage[colorlinks=true,citecolor=blue,linkcolor=blue]{hyperref}
+\usepackage[draft,colorlinks=true,citecolor=blue,linkcolor=blue]{hyperref}
 \usepackage{flushend}
+
+\newcommand{\argmin}{\operatornamewithlimits{argmin}}
 
 \newcommand\todo[1]{\textcolor{red}{TODO: #1}}
 
@@ -70,6 +72,10 @@ on each Atari game, it gets good at most of them and better than human (consider
 Finally it has been pointed out by the original DQN conceptors that DQN has an ability to learn by acquiring experience generated from policies
 other than its own. \todo{On peut en faire qqch pas vrai ?}
 
+One of the big advantages of deep reinforcement learning is that it relies on a general-purpose learning procedure which allows to make
+abstraction of each game's specificities. Although this project focuses on performing on Breakout (a popular Atari game), we made sure
+that our agents could be used to learn playing on any Atari game.
+
 \section{Methods}
 
 Our source code is available at \url{https://github.com/RobinPetit/Learning-Chaos}.
@@ -86,15 +92,6 @@ Then the sample size has been reduced by a factor of three by mapping RGB values
 
 After mapping the three color channels to a unique channel, the number of pixels has also been reduced. Each input image as been rescaled to a
 $84 \times 84$ pixel grid.
-
-Since we are handling visual features, we used screen frames as environment state representations. Each frame is a (210 x 160) color image sampled at
-a frequency of 60 Hz. We denote the environment state at current step $t$ by $s_t$. The agent gathers experience by incorporating new experience samples
-to its history. An experience is a tuple $e_t = (s_t, a_t, r_t, s_{t+1})$ appended to the experience history immediately after being generated.
-To prevent the agent from forgetting the history and increase the bias towards most recent experience samples, we have recourse to the experience
-replay algorithm ~\citep{adam2012experience}. One can straightforwardly implement it as a uniform sampling algorithm that returns random experience samples at each step.
-We compared this technique to a more efficient approach called prioritized experience replay~\citep{DBLP:journals/corr/SchaulQAS15}.
-To emphasize the importance of the memory replay mechanism, we compared the results obtained using prioritized experience replay, regular
-experience replay, and no experience replay.
 
 Every 4 steps of the Q-learning, the agent builds a minibatch from its memory (either one of the three mechanisms we just mentioned):
 this minibatch is used by the DQN to process one step of stochastic gradient descent. In this way the values of Q are estimated iteratively and
@@ -157,7 +154,9 @@ These are then reshaped into a column vector (of size $7 \times 7 \times 64 = 31
 which is then connected to the last layer (again fully-connected) which corresponds to the output with the same size as the action space (4 in the
 case of Breakout: \textit{NOOP}, \textit{FIRE}, \textit{LEFT} and \textit{RIGHT}).
 
-We also reimplemented a Dueling Deep Q-Network (DDQN) in which the high-level representation of states and action values are separated.
+In addition to the original DQN article, we also reimplemented a Dueling Deep Q-Network \citep{DBLP} (DDQN) in which the high-level representation of states 
+and action values are separated. This shouldn't be confused with the notion of target neural network. Indeed each of our model is copied to a target model
+of the same architecture. The DDQN accompanied by its target DDQN, constitute a whole different agent.
 For this purpose,the same convolutional architecture as before was kept, but the output of the last convolutionel layer was split in two streams of
 equal sizes (each stream input size is the same as the output size of the last convolutional layer), then the resulting tensors have been flattened.
 The first stream, which is designed to represent the potential advantage per action, is fully-connected to 6 neurons (one per action), while the second stream
@@ -172,7 +171,7 @@ $\alpha$ are the parameters of the state-value stream's fully-connected layer, $
 fully-connected layer, $\theta$ are the parameters of the rest of the network, and $\mathcal{A}$ is the discrete action space.
 
 \subsubsection{Implementation}
-The neural networks have been implemented using the software library Tensorflow \citep{tensorflow2015-whitepaper}.
+All CNNs have been implemented using the software library Tensorflow \citep{tensorflow2015-whitepaper}.
 Thus our models consist of data flow graphs designed in a symbolic programming fashion, where each node of a graph is an operation
 and each edge is a data tensor.
 
@@ -193,6 +192,65 @@ with $y_j$ set either to $r_{t_j}$ if $s_{t_j}$ is a final state (i.e. either th
 $r_{t_j} + \gamma\max_{a' \in A(s_{t_j})}\hat Q(s_{t_j+1}, a'; \theta^-)$ otherwise; therefore using the target action-value network.
 
 The $\hat Q$ target action-value network is then copied back from the action value network $Q$ every 10,000 steps.
+
+\subsection{Hierarchical memory}
+
+Since we are handling visual features, we used screen frames as environment state representations. Each frame is a (210 x 160) color image sampled at
+a frequency of 60 Hz. We denote the environment state at current step $t$ by $s_t$. The agent gathers experience by incorporating new experience samples
+to its history. An experience is a tuple $e_t = (s_t, a_t, r_t, s_{t+1})$ appended to the experience history immediately after being generated.
+To prevent the agent from forgetting the history and increase the bias towards most recent experience samples, we have recourse to the experience
+replay algorithm ~\citep{adam2012experience}. One can straightforwardly implement it as a uniform sampling algorithm that returns random experience samples at each step.
+We compared this technique to a more efficient approach called prioritized experience replay~\citep{DBLP:journals/corr/SchaulQAS15}.
+To emphasize the importance of the memory replay mechanism and as group contribution, we compared the results obtained using prioritized experience replay, uniform
+experience replay, and no experience replay.
+
+Regular experience replay consists in feeding the CNN with uniformly random samples stored in memory. To ensure the agent remembers experience samples $e_t$ that
+occured long time ago ($t$ being significantly less than current step), one must allow the replay memory to be really large. Most researchers use a memory size
+of 1,000,000 samples, which is too large for most personnal computers (over 16 Gb in the framework of our project). Our second and main contribution consisted in
+overcoming this issue by implementing a hierarchical style of memory and showing that it does not jeopardize the performance of Deep Q-networks.
+
+Our hierarchical memory consists of a short-term memory and a long-term memory. The latter stores all the experience samples but is not directly accessed by the agent.
+Every time the agent needs to perform a mini-batch gradient descent, it requests a mini-batch to the short-term memory. To ensure diversity of the experience,
+the short-term memory is updated by copying contiguous data from the long-term memory, where the beginning of the contiguous selected area is selected randomly.
+This update operation is repeated every 30,000 steps only in order to avoid a significant reduction in learning speed.
+
+\subsubsection{Implementation}
+
+Long-term experience samples are stored in a large-sized memory-mapped file. The corresponding memory map is used as an abstract data structure that allows to access
+the samples by indexing. Short-term memory is implemented as a contiguous array. This array is regularly updated by copying contiguous chunks of data samples from
+long-term memory. The agent receives random mini-batches constructed from this short-term array. A contrario, each new experience sample acquired by the agent
+(via the environment) is stored directly into the long-term memory. Indeed it appeared that the time required to add a new sample to memory was negligible 
+compared with the time required to generate a mini-batch of 32 samples. Actually because the random selection is uniform (for regular experience replay),
+the selected samples have very large gaps between them, which causes a lot of cache misses.
+
+\subsubsection{Prioritized experience replay}
+
+Prioritized experience replay~\citep{DBLP:journals/corr/SchaulQAS15} has been shown to drastically reduce learning time requirements for many deep
+reinforcement learning problems, or even improve model performance in some problems, in particular a large majority of Atari games.
+The main shortcoming of uniform experience replay is the fact that mini-batches may contain highly redundant states. Plus, most experience samples have
+a zero reward. Gradient descent does not perform well when only negative samples are used. We used rank-based prioritization, which consists in ranking
+experience samples by how well they "surprised" the model, and randomly selecting them with respect to weights that are positively correlated with the ranks.
+
+Schaul et al. introduced different ways to compute these ranks. We chose to prioritize with the temporal-difference error:
+\begin{multline}
+    \delta_t = r_t + \gamma_t Q_{target}(s_t, \argmin_a Q(s_t, a)) - Q(s_{t-1}, a_{t-1})
+\end{multline}
+where $Q_{target}$ is a function that applies a forward pass using the weights of the target CNN, $Q$ is a similar function
+but for the first CNN, and $r_t$ is the reward received at step $t$.
+
+To create a mini-batch, samples are selected according to a weighted distribution, where the weights are computed as follows:
+\begin{multline}
+    P(j) = p_i^{alpha} / \Sigma_i p_i^{alpha}
+\end{multline}
+$p_i$ designates the absolute value of the temporal-difference error on particular sample $i$ at current step $t$.
+At the start of learning phase the vast majority of probabilities $p_i$ haven't been evaluated yet. This is why we initialized
+them with a value of $1$ (which corresponds to a uniform random selection). Coefficient $\alpha$ is a hyper-parameter that
+determines how strong the prioritization is. If $\alpha$ is set to zero, one falls back on the case of uniform random selection.
+
+To take into account the relative importance of each sample inside a mini-batch, we had to modify the DQN learning procedure and weight the Huber loss
+by an importance sampling weight, calculated from the probabilities $p_i$. For more details about importance sampling weights, please refer to the original
+article. The difference between our implementation and what was described in the article is the utilization of the Huber loss instead of only
+the temporal-difference error for updating weights.
 
 \section{Results}
 
@@ -238,7 +296,7 @@ called \textit{Nonlinear Dimensionality Reduction}~\citep{lee2007nonlinear}.
 
 The implementation of t-SNE that was used is the one from Scikit-Learn~\citep{scikit-learn}, the Python library.
 
-  \todo{Magnifique plot T-SNE avec des couleurs et des gifs et des trucs qui font beep et qui font boop. Robin est dessus.}~\citep{wattenberg2016how}
+  \todo{Magnifique plot T-SNE avec des couleurs et des gifs et des trucs qui font beep et qui font boop. Robin est dessus. Robin gère.}~\citep{wattenberg2016how}
 
 \begin{figure}
 	\includegraphics[width=.5\textwidth]{figures/TSNE_dqn_uniform}
@@ -272,7 +330,11 @@ the brick layer, leading to the ball destroying the upper layer.
 
 \section{Discussion}
 
-  \todo{Amélioration: Double dueling DQN}~\citep{DBLP:journals/corr/WangFL15}
+\todo{Les CNNs c'est instable, faut du temps et faire du café et bcp de parameter tuning -> solution plus stable ? Modèle linéaire (cf article d'origine) ?}
+
+\todo{Comme pour la prioritized faut mettre à jour les poids de tous les samples à chaque step, c'est compliqué faut optimiser ça}
+
+\todo{LSTM ?}
 
 \section{Conclusion}
 
