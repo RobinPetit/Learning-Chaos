@@ -4,14 +4,15 @@
 \usepackage[sort, colon]{natbib}
 \usepackage{alifexi}
 \usepackage{float}
-\usepackage[font=small,labelfont=bf]{caption}
-\usepackage{subcaption}
+\usepackage{dblfloatfix}
+\usepackage[font=footnotesize,labelfont=bf]{caption}
+\usepackage[font=scriptsize]{subcaption}
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{commath}
 
-\usepackage[colorlinks=true,citecolor=blue,linkcolor=blue]{hyperref}
+\usepackage[colorlinks=true,citecolor=black,linkcolor=blue]{hyperref}
 \usepackage{flushend}
 
 \newcommand{\argmin}{\operatornamewithlimits{argmin}}
@@ -31,14 +32,14 @@ Universit\'{e} Libre de Bruxelles \\
 
 \begin{abstract}
 
-  Reinforcement learning is a subarea of machine learning inspired by neuroscience, where learners have to select actions with
+  Reinforcement learning is a subarea of machine learning inspired by neuroscience where learners have to select actions with
   regards to the environment state and receive a reward accordingly. Each agent's objective is to maximize its cumulative reward across its whole lifetime,
   subdivided into episodes. In the traditional framework of reinforcement learning and more specifically in Q-learning,
   researchers usually deal with a small discrete space to represent the values of Q. This is no longer sufficient if one desires to describe the environment state
-  as an image of raw pixels. In consequence, we introduce deep Q-learning methods, which have been found to be really effective in mapping raw pixels
+  as an image of raw pixels. Hence, we introduce deep Q-learning methods, which have been found to be really effective in mapping raw pixels
   to abstract high-level features. In deep Q-learning, the estimation of Q-values for a given action are produced using deep neural networks,
-  which consist of many neural layers stacked on top of each other.
-  These techniques have revealed themselves to be able to beat human experts at playing Atari games
+  which consists in many neural layers stacked on top of each other.
+  These techniques have proved to be able to beat human experts at playing Atari games
   by learning only from visual features. Despite the current progress, learning how to take complex decisions on the basis of high-dimensional visual data remains an
   ongoing challenge. In particular, because of the instability of neural networks, we also explored state-of-the-art dueling architectures to enhance performance
   by separating the high-level representation of states and action values (rewards).
@@ -61,8 +62,8 @@ Instead, one can design a learnable function that maps pixel values to a single 
 of the action space. For that purpose we used a Deep Q-Network (DQN) to approximate this function, as in the original DQN article~\citep{mnih2015human}, since feedforward Neural Networks
 are known to be universal function approximators (Theorem 2 in~\cite{hornik1991approximation}).
 A DQN is a particular instance of Convolutional Neural Networks (CNN) and is composed of a stack of neural layers~\citep{lecun1998gradient}. One characteristic of CNNs is the
-presence of convolutional filters that maps pixel luminance to more abstract features. Each filter (or kernel) is locally connected to its output, which
-allows the convolutional layer to capture the local information of the pixels, contrary to what dense (fully-connected) layers do. This procedure is greatly
+presence of convolutional filters that map pixel luminance to more abstract features. Each filter (or kernel) is locally connected to its output, which
+allows the convolutional layer to capture the local information of the pixels, as opposed to what dense (fully-connected) layers do. This procedure is greatly
 inspired by the notion of receptive field introduced by Hubel and Wiesel~\citep{Hubel1962}.
 Let $Q(s, a; \theta_i)$ be the Q-value approximation function represented by the neural network, parameterized by its weights $\theta$ at time step $i$.
 
@@ -71,11 +72,11 @@ algorithm that is not only good at learning one particular task but several of t
 on each Atari game, it gets good at most of them and better than human (considered $75\%$ of human score or more) at 22 of the 49 experimented~\citep{mnih2015human}.
 
 Finally it has been pointed out by the original DQN conceptors that DQN has an ability to learn by acquiring experience generated from policies
-other than its own. \todo{On peut en faire qqch pas vrai ?}
+other than its own.
 
 One of the big advantages of deep reinforcement learning is that it relies on a general-purpose learning procedure which allows to make
-abstraction of each game's specificities. Although this project focuses on performing on Breakout (a popular Atari game), we made sure
-that our agents could be used to learn playing on any Atari game.
+abstraction of each game's specificities. Although this project focuses on performing on Breakout (a popular Atari game),
+our agents could be used to learn playing on most Atari game.
 
 \section{Methods}
 
@@ -86,7 +87,7 @@ retrieve the environment state as a raw image (for deep reinforcement learning r
 applications). Because of the very high dimensionality of raw images, we applied some preprocessing steps on them. These steps are also aimed at
 removing some artifacts produced by the Atari architecture. More specifically, the flickering effect implies that some game sprites only appear
 in one out of two frames. An easy solution consists in taking the pixelwise maximum value between the current frame and the previous frame.
-Then the sample size has been reduced by a factor of three by mapping RGB values to the pixel luminance, using the following formula:
+Then the sample size has been reduced by a factor of three by mapping RGB values to the pixel luminance using the following formula:
 \begin{equation}
     \text{Luminance} = 0.299 \times R + 0.587 \times G + 0.114 \times B.
 \end{equation}
@@ -94,7 +95,7 @@ Then the sample size has been reduced by a factor of three by mapping RGB values
 After mapping the three color channels to a unique channel, the number of pixels has also been reduced. Each input image as been rescaled to a
 $84 \times 84$ pixel grid.
 
-Every 4 steps of the Q-learning, the agent builds a minibatch from its memory (either one of the three mechanisms we just mentioned):
+Every 16 steps of the Q-learning, the agent builds a minibatch from its memory (either one of the three mechanisms we just mentioned):
 this minibatch is used by the DQN to process one step of stochastic gradient descent. In this way the values of Q are estimated iteratively and
 refined over time. The deep neural network incorporates minimal prior knowledge about the environment: the only assumption lies in the number of
 outputs in the last hidden layer, which has been set as the number of actions. In every Atari game, the action space is discrete, finite and constant over time:
@@ -110,9 +111,9 @@ where P designates the normalized performance, RAS the random action selection s
 game tester after a training period of 2 hours.  By normalizing in this manner, the random action selection score RAS results in a normalized performance
 of 0\% and the human score results in a normalized performance of 100\%.
 
-The perceived rewards of the agent have all been reduced to be either $-1$ for a negative reward, $0$ for a session with no reward, and $+1$
+The perceived rewards of the agent have all been clipped to be either $-1$ for a negative reward, $0$ for a session with no reward, and $+1$
 for a positive reward, i.e. at any time $t$: $r_t \in \{-1, 0, +1\}$. No intermediate or larger reward is available to the learning algorithm.
-This allows to learn without any previous knowledge on the particular game the DQN is trained on. Yet some rewards can be highly different (in Pac-Man likes,
+This allows to learn without any previous knowledge of the particular game the DQN is trained on. Yet some rewards can be highly different (in Pac-Man likes,
 eating a cherry gives 100 points, a banana gives 5000, and eating a ghost gives $2^n \times 100$ with $n$ the number of eaten ghosts in a single run).
 This could be improved by adaptive normalization~\citep{van2016learning}.
 
@@ -136,7 +137,7 @@ squared error on a small neighbourhood of $0$, and by the absolute value outside
 	                                                            \delta\left(\abs x - \frac 12\delta\right) &\text{ otherwise.}\end{cases}
 \end{equation}
 
-The interest of the Hubert loss is to bound the gradient of the loss between $-1$ and $+1$, and is claimed to increase stability~\citep{mnih2015human},
+The interest of the Huber loss is to bound the gradient of the loss between $-1$ and $+1$, and is claimed to increase stability~\citep{mnih2015human},
 yet no further investigation has been performed.
 
 \subsection{Neural Network architecture}
@@ -155,10 +156,11 @@ These are then reshaped into a column vector (of size $7 \times 7 \times 64 = 31
 which is then connected to the last layer (again fully-connected) which corresponds to the output with the same size as the action space (4 in the
 case of Breakout: \textit{NOOP}, \textit{FIRE}, \textit{LEFT} and \textit{RIGHT}).
 
-In addition to the original DQN article, we also reimplemented a Dueling Deep Q-Network \citep{DBLP} (DDQN) in which the high-level representation of states
+In addition to the original DQN article, we also reimplemented a Dueling Deep Q-Network \citep{DBLP:journals/corr/WangFL15} (DDQN) in which the high-level
+representation of states
 and action values are separated. This shouldn't be confused with the notion of target neural network. Indeed each of our model is copied to a target model
 of the same architecture. The DDQN accompanied by its target DDQN, constitute a whole different agent.
-For this purpose,the same convolutional architecture as before was kept, but the output of the last convolutionel layer was split in two streams of
+For this purpose,the same convolutional architecture as before was kept, but the output of the last convolutional layer was split in two streams of
 equal sizes (each stream input size is the same as the output size of the last convolutional layer), then the resulting tensors have been flattened.
 The first stream, which is designed to represent the potential advantage per action, is fully-connected to 6 neurons (one per action), while the second stream
 contains a dense representation of the state value and is fully-connected to a single neuron.
@@ -206,8 +208,8 @@ To emphasize the importance of the memory replay mechanism and as group contribu
 experience replay, and no experience replay.
 
 Regular experience replay consists in feeding the CNN with uniformly random samples stored in memory. To ensure the agent remembers experience samples $e_t$ that
-occured long time ago ($t$ being significantly less than current step), one must allow the replay memory to be really large. Most researchers use a memory size
-of 1,000,000 samples, which is too large for most personnal computers (over 16 Gb in the framework of our project). Our second and main contribution consisted in
+occurred long time ago ($t$ being significantly less than current step), one must allow the replay memory to be really large. Most researchers use a memory size
+of 1,000,000 samples, which is too large for most personal computers (over 7 Gb in the framework of our project). Our second and main contribution consisted in
 overcoming this issue by implementing a hierarchical style of memory and showing that it does not jeopardize the performance of Deep Q-networks.
 
 Our hierarchical memory consists of a short-term memory and a long-term memory. The latter stores all the experience samples but is not directly accessed by the agent.
@@ -274,7 +276,13 @@ Figure~\ref{fig:dqn uniform} shows the results of the DQN after 16,000,000 steps
 increasing the $Q$ estimates: the internal representation was being built up. Also, the score per episode is very low at first since the agent plays
 randomly, a million steps were required for $\epsilon$ to linearly decrease from $1$ to $0.1$.
 
-After this phase, the estimates increase and so does the score per episode, until they both reached stability around 11,000,000 steps.
+After this phase, the estimates increase and so does the score per episode, until they both started to settle around 11,000,000 steps. Even though
+the score per episode seems to slowly stabilize, the model would need more training time to fully reach stability.
+
+As the $Q$ values computed at each batch are the $Q$ values for the images that the DQN observed at the update step, it is expected to not see
+them fully converge: a SGD is performed every 16 steps, independently of the current image. Therefore if the weights update is performed after
+a frame where the agent receives positive reward no matter its action (e.g. right before the ball hits a brick) or after a frame where the agent
+receives negative reward, no matter his action (e.g. if the ball is about to fall and the paddle is too far away), the $Q$ values will be different.
 
 \begin{table}[!h]
 	\centering
@@ -300,13 +308,6 @@ The implementation of t-SNE that was used is the one from Scikit-Learn~\citep{sc
 a perplexity of 30 and a learning rate of 200 on 1000 iterations. The learning rate is quite high relatively to the propositions in~\cite{wattenberg2016how},
 which allows to decrease embedding time. The perplexity lies in the range from 5 to 50 which is advised.
 
-\todo{Parler du clustering.}
-
-The two windows on the right of the figure show the states leading to the smallest estimated $Q$ value (blue) and the highest (red).
-We can observe that the image with the smallest estimated $Q$ is an image without ball, meaning that no immediate reward is available. It
-is worth noting that the DQN doesn't seem to have learned to use the FIRE action when it misses the ball. The image with the highest estimated
-$Q$ is an image where the ball is about to hit a brick, leading to an immediate positive reward.
-
 \begin{figure}[!h]
 	\includegraphics[width=.5\textwidth]{figures/TSNE_dqn_uniform}
 	\caption{Projection of 320,000 states onto a 2-dimensional space. The color of each dot (from dark green to yellow) represents the estimated $Q$ value of the
@@ -314,22 +315,21 @@ $Q$ is an image where the ball is about to hit a brick, leading to an immediate 
 	\label{fig:t-SNE DQN uniform}}
 \end{figure}
 
-Figure~\ref{fig:dqn uniform scores dist} shows the distribution of scores when letting the DQN play for 100 games. We can see that despite having an
-average score of 39.88 (with a standard deviation of 41.14), the DQN outputs score ranging from 7 to 219. This means that some states haven't been encountered
-enough for the DQN to know significantly which one is better, and can also be slightly related to the $\epsilon$-greedy policy, yet $\epsilon$ is quite small,
-and more importantly, the agent selects the action at each frame. This highest score of 219 is probably due to a non-anticipated breaking through
-the brick layer, leading to the ball destroying the upper layer whose bricks add 7 points to the score.
+The states end up clustered by images with similar $Q$ values estimates, so the DQN estimates close $Q$ values for similar images.
+
+The two windows on the right of the figure show the states leading to the smallest estimated $Q$ value (blue) and the highest (red).
+We can observe that the image with the smallest estimated $Q$ is an image without ball, meaning that no immediate reward is available. It
+is worth noting that the DQN doesn't seem to have learned to use the FIRE action when it misses the ball. The image with the highest estimated
+$Q$ is an image where the ball is about to hit a brick, leading to an immediate positive reward.
+
+It is interesting to notice that the image with the smallest $Q$ estimation is an image with no ball rather than an image with a ball about
+to be missed by the agent: the DQN considers that, in terms of reward expectation, having missed a ball is worse than missing a ball. This
+reinforces the hypothesis that the DQN did not learn to play FIRE since not restarting the game means no reward.
 
 \begin{figure}[!h]
 	\includegraphics[width=.5\textwidth]{figures/dqn_uniform_score_distribution}
 	\caption{Distribution of the scores performed by the DQN on 100 plays.\label{fig:dqn uniform scores dist}}
 \end{figure}
-
-Figure~\ref{fig:DDQN + DQNP} shows the evolution of reward per episode and of $Q$ estimates on 16,000,000 steps for the DDQN and 7,000,000 for the DQN with
-prioritized memory.
-
-One can observe that the DDQN seems to stabilize around an average reward per episode of 1.4 (though more training time would be needed to ensure convergence),
-like the DQN with uniform memory. Yet, $Q$ estimates of the DQN end up around $2$ whereas they are only half as big for the DDQN.
 
 \begin{figure*}[!t]
 	\vspace{-1.5cm}
@@ -344,13 +344,11 @@ like the DQN with uniform memory. Yet, $Q$ estimates of the DQN end up around $2
 		with a window of size 5000.}
 	\end{subfigure}
 	\begin{subfigure}{.47\textwidth}
-		\vspace{-.15cm}
 		\includegraphics[width=\textwidth]{figures/dqn_prioritized_e_scores}
 		\subcaption{Total score per episode of the DQN with prioritized memory during its learning phase, smoothed using a moving average of size 1000.}
 	\end{subfigure}
 	\hfill
 	\begin{subfigure}{.47\textwidth}
-		\vspace{-.15cm}
 		\includegraphics[width=\textwidth]{figures/dqn_prioritized_q_values}
 		\caption{Estimation of $Q$ by the DQN with prioritized memory, averaged across actions, for each batch during its learning phase and smoothed using a moving average
 		with a window of size 5000.}
@@ -373,25 +371,64 @@ like the DQN with uniform memory. Yet, $Q$ estimates of the DQN end up around $2
 	\caption{Adaptation of Figure~\ref{fig:dqn uniform scores dist} for both DDQN (a) and DQN with prioritized memory (b).\label{fig:scores DDQN + DQNP}}
 \end{figure*}
 
-\todo{Continuer (ici pour ne pas flinguer la mise en page) l'analyse comparative}
+Figure~\ref{fig:dqn uniform scores dist} shows the distribution of scores when letting the DQN play for 100 games. We can see that despite having an
+average score of 39.88 (with a standard deviation of 41.14), the DQN outputs score ranging from 7 to 219. This means that some states haven't been encountered
+enough for the DQN to know significantly which one is better, and can also be slightly related to the $\epsilon$-greedy policy, yet $\epsilon$ is quite small,
+and more importantly, the agent selects the action at each frame. This highest score of 219 is probably due to a non-anticipated breaking through
+the brick layer, leading to the ball destroying the upper layer whose bricks add 7 points to the score.
+
+Figure~\ref{fig:DDQN + DQNP} shows the evolution of reward per episode and of $Q$ estimates on 16,000,000 steps for the DDQN and 7,000,000 for the DQN with
+prioritized memory.
+
+One can observe that the DDQN seems to stabilize around an average reward per episode of 1.4 (though more training time would be needed to ensure convergence),
+like the DQN with uniform memory. Yet, $Q$ estimates of the DQN end up around $2$ whereas they are only half as big for the DDQN, which is the very point of
+the DDQN: avoid overoptimistic estimations~\citep{DBLP:journals/corr/WangFL15}.
+
+On the other hand, the addition of prioritized memory annihilates the results by making no score at all: Table~\ref{tab:scores breakout} shows that the performance
+is negative, so this agent is worse than random; it avoids the ball. Again, this is partly consistent with the results of~\cite{DBLP:journals/corr/SchaulQAS15}
+who also had worse performances on Breakout. Yet, the agent should still be able to learn how to play. This deficiency can also be due to the reduction of
+the replay memory size compared to the uniform memory or even to the instability of nonlinear estimators of the $Q$ function~\citep{tsitsiklis1996analysis}
+
+The distribution of scores per game for both DDQN and DQN with prioritized memory are shown in Figure~\ref{fig:scores DDQN + DQNP}.
+
+The distribution of the DDQN is very similar to the distribution of the DQN (if ignoring the score of 219 which must be the occurrence
+of a very unlikely event), only slightly shifted towards left, leading to the mode being [20, 30] for the DDQN versus [30, 40] for the DQN.
 
 \section{Discussion}
 
-\todo{Les CNNs c'est instable, faut du temps et faire du café et bcp de parameter tuning -> solution plus stable ? Modèle linéaire (cf article d'origine) ?}
+The results obtained in this study don't pretend to outperform the original results by~\cite{mnih2015human} because the timing to develop and train the models,
+and the available computing power were restricted, causing the training to not be extensive and preventing from reproducing the learning with different
+parameters or even different initializations.
 
-\todo{Comme pour la prioritized faut mettre à jour les poids de tous les samples à chaque step, c'est compliqué faut optimiser ça}
+Furthermore, due to the computational cost of training a single model on different networks, we had to select a single game to test, out of the 49 games that were tested
+in the original work. The choice of \textit{Breakout} was finally made because of the performance obtained in the original work (over 10 times the score of the
+human player), as well as its simplicity in terms of features. Before making any attempt to improve on the described methods and models, one should first apply
+them to a wider variety of games, since the strength of this approach lies in its very general domain of application. Still, the efficiency of this method on
+different games, and then different types of gameplay, has been proved in~\cite{mnih2015human}.
 
-\todo{LSTM ?}
+When comparing scores obtained by the trained network and human players, it should be noted that even though the input available to both kind of players was the same,
+the learning process itself is not comparable. While human players learn in great part by applying knowledge from games they previously played, our agent had to
+infer every useful feature from scratch. It could be argued that each game taken individually was not designed to be the first and only game played by a human. In fact
+some elementary actions such as resuming a game immediately after a life loss, which would be performed instinctively by any human player, were not always performed by
+the model, resulting in many useless frames.
+
+Also, other improvements have been performed to this Deep Reinforcement Learning task since~\citep{mnih2015human}.
+
+Asynchronous advantage actor-critic (A3C) replaces the experience replay algorithm described hereabove with an asynchronous and parallel execution of multiple agents,
+each of whom evolves within its own, independent instance of the environment. The experience replay's role of decreasing the bias towards the most recent experience samples
+is performed by independently using different exploration policies and thus simultaneously experiencing a wide range of states. Moreover, replacing the experience replay
+algorithm additionally allows the use on-policy reinforcement learning methods such as actor-critic). The A3C algorithm also tackles the high hardware requirements of
+standard DQN algorithms, achieving better results in less training time (almost linear in the number of parallel agents) using a standard multi-core CPU~\citep{mnih2016asynchronous}
+
 
 \section{Conclusion}
 
-	\todo{Ajouter ordre de performance des 3 tests}
+We have implemented a standard DQN as presented in the original paper by Google, and we integrated two different improvements, namely a prioritized memory and a DDQN.
+As expected, both the DQN and the DDQN perform at least as well as Google's human tester, but the DQN with prioritized memory failed.
 
-\section{Acknowledgements}
+Yet, given the observed results and, the original work, our implementation seems to work, and could be trained on longer period to keep enhancing the results.
 
-  \todo{Remercier Lenaerts, Nowe, Google, OpenAI, Markov}
-
-%\newpage
+\newpage
 \footnotesize
 \bibliographystyle{apalike}
 \bibliography{article}
