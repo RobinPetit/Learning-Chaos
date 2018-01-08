@@ -4,13 +4,14 @@
 \usepackage[sort, colon]{natbib}
 \usepackage{alifexi}
 \usepackage{float}
+\usepackage[font=small,labelfont=bf]{caption}
 \usepackage{subcaption}
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{commath}
 
-\usepackage[draft,colorlinks=true,citecolor=blue,linkcolor=blue]{hyperref}
+\usepackage[colorlinks=true,citecolor=blue,linkcolor=blue]{hyperref}
 \usepackage{flushend}
 
 \newcommand{\argmin}{\operatornamewithlimits{argmin}}
@@ -154,7 +155,7 @@ These are then reshaped into a column vector (of size $7 \times 7 \times 64 = 31
 which is then connected to the last layer (again fully-connected) which corresponds to the output with the same size as the action space (4 in the
 case of Breakout: \textit{NOOP}, \textit{FIRE}, \textit{LEFT} and \textit{RIGHT}).
 
-In addition to the original DQN article, we also reimplemented a Dueling Deep Q-Network \citep{DBLP} (DDQN) in which the high-level representation of states 
+In addition to the original DQN article, we also reimplemented a Dueling Deep Q-Network \citep{DBLP} (DDQN) in which the high-level representation of states
 and action values are separated. This shouldn't be confused with the notion of target neural network. Indeed each of our model is copied to a target model
 of the same architecture. The DDQN accompanied by its target DDQN, constitute a whole different agent.
 For this purpose,the same convolutional architecture as before was kept, but the output of the last convolutionel layer was split in two streams of
@@ -219,7 +220,7 @@ This update operation is repeated every 30,000 steps only in order to avoid a si
 Long-term experience samples are stored in a large-sized memory-mapped file. The corresponding memory map is used as an abstract data structure that allows to access
 the samples by indexing. Short-term memory is implemented as a contiguous array. This array is regularly updated by copying contiguous chunks of data samples from
 long-term memory. The agent receives random mini-batches constructed from this short-term array. A contrario, each new experience sample acquired by the agent
-(via the environment) is stored directly into the long-term memory. Indeed it appeared that the time required to add a new sample to memory was negligible 
+(via the environment) is stored directly into the long-term memory. Indeed it appeared that the time required to add a new sample to memory was negligible
 compared with the time required to generate a mini-batch of 32 samples. Actually because the random selection is uniform (for regular experience replay),
 the selected samples have very large gaps between them, which causes a lot of cache misses.
 
@@ -233,15 +234,15 @@ experience samples by how well they "surprised" the model, and randomly selectin
 
 Schaul et al. introduced different ways to compute these ranks. We chose to prioritize with the temporal-difference error:
 \begin{multline}
-    \delta_t = r_t + \gamma_t Q_{target}(s_t, \argmin_a Q(s_t, a)) - Q(s_{t-1}, a_{t-1})
+    \delta_t = r_t + \gamma_t Q_{\text{target}}\big(s_t, \argmin_a Q(s_t, a)\big) - Q(s_{t-1}, a_{t-1})
 \end{multline}
-where $Q_{target}$ is a function that applies a forward pass using the weights of the target CNN, $Q$ is a similar function
+where $Q_{\text{target}}$ is a function that applies a forward pass using the weights of the target CNN, $Q$ is a similar function
 but for the first CNN, and $r_t$ is the reward received at step $t$.
 
 To create a mini-batch, samples are selected according to a weighted distribution, where the weights are computed as follows:
-\begin{multline}
-    P(j) = p_i^{alpha} / \Sigma_i p_i^{alpha}
-\end{multline}
+\begin{equation}
+    P(j) = p_j^{\alpha} / \sum_i p_i^{\alpha}
+\end{equation}
 $p_i$ designates the absolute value of the temporal-difference error on particular sample $i$ at current step $t$.
 At the start of learning phase the vast majority of probabilities $p_i$ haven't been evaluated yet. This is why we initialized
 them with a value of $1$ (which corresponds to a uniform random selection). Coefficient $\alpha$ is a hyper-parameter that
@@ -255,7 +256,7 @@ the temporal-difference error for updating weights.
 \section{Results}
 
 \begin{figure*}[!t]
-	\vspace{-1cm}
+	\vspace{-1.5cm}
 	\begin{subfigure}{.47\textwidth}
 		\includegraphics[width=\textwidth]{figures/dqn_uniform_e_scores}
 		\subcaption{Total score per episode during a learning phase of 16,000,000 steps, smoothed using a moving average with a window of size 1000.}
@@ -277,15 +278,16 @@ After this phase, the estimates increase and so does the score per episode, unti
 
 \begin{table}[!h]
 	\centering
-	% std of Random is 1.27 & std of DQN is 22.81
-	\begin{tabular}{l|l|l|l}
-		Model & Random & Human & DQN \\ \hline \hline
-		Score & $1.31$ & $31.8$ & $39.88$ \\ \hline
-		P &  $0\%$ & $100\%$ & $126.83\%$
+	\small
+	\setlength\tabcolsep{5pt}
+	\begin{tabular}{l|l|l|l|l|l}
+		Model & Random & Human & DQN (U) & DQN (P) & DDQN \\ \hline \hline
+		Score & $1.31$ & $31.8$ & $39.88$ & $0.22$ & $30.26$ \\ \hline
+		P &  $0\%$ & $100\%$ & $126.83\%$ & $-3.57\%$ & $94.95\%$
 	\end{tabular}
-	\caption{Score and Performance on Breakout (averaged on 100 simulations with $\varepsilon=5\%$ and with one action decision per frame). The DQN has been
-	trained during 16,000,000 steps.
-	\todo{Ajouter scores Prioritized + DDQN et le temps d'apprentissage}\label{tab:scores breakout}}
+	\caption{Score and Performance on Breakout (averaged on 100 simulations with $\varepsilon=5\%$ and with one action decision per frame). DQN (U) represents the
+	DQN with uniform replay memory, and DQN (P) represents the DQN with prioritized memory. The DQNs have been trained during 16,000,000 steps, and the DDQN has
+	been trained for 7,000,000 steps.\label{tab:scores breakout}}
 \end{table}
 
 Table~\ref{tab:scores breakout} shows that the DQN performed better than human after 16,000,000 training steps, with a performance of $126.83\%$.
@@ -294,39 +296,84 @@ Figure~\ref{fig:t-SNE DQN uniform} shows a 2-dimensional representation of the l
 vector. The method of \textit{projection} that was used is t-SNE~\citep{maaten2008visualizing}, which is part of the manifold learning algorithms, also
 called \textit{Nonlinear Dimensionality Reduction}~\citep{lee2007nonlinear}.
 
-The implementation of t-SNE that was used is the one from Scikit-Learn~\citep{scikit-learn}, the Python library.
+The implementation of t-SNE that was used is the one from Scikit-Learn~\citep{scikit-learn}, the Python library. The parameters are the default ones:
+a perplexity of 30 and a learning rate of 200 on 1000 iterations. The learning rate is quite high relatively to the propositions in~\cite{wattenberg2016how},
+which allows to decrease embedding time. The perplexity lies in the range from 5 to 50 which is advised.
 
-  \todo{Magnifique plot T-SNE avec des couleurs et des gifs et des trucs qui font beep et qui font boop. Robin est dessus. Robin gère.}~\citep{wattenberg2016how}
+\todo{Parler du clustering.}
 
-\begin{figure}
+The two windows on the right of the figure show the states leading to the smallest estimated $Q$ value (blue) and the highest (red).
+We can observe that the image with the smallest estimated $Q$ is an image without ball, meaning that no immediate reward is available. It
+is worth noting that the DQN doesn't seem to have learned to use the FIRE action when it misses the ball. The image with the highest estimated
+$Q$ is an image where the ball is about to hit a brick, leading to an immediate positive reward.
+
+\begin{figure}[!h]
 	\includegraphics[width=.5\textwidth]{figures/TSNE_dqn_uniform}
-	\caption{\todo{Replace with correct plot}.\label{fig:t-SNE DQN uniform}}
+	\caption{Projection of 320,000 states onto a 2-dimensional space. The color of each dot (from dark green to yellow) represents the estimated $Q$ value of the
+	best action the agent can play. The states leading to the smallest and the highest estimated $Q$ are displayed with respectively a blue and a red border.
+	\label{fig:t-SNE DQN uniform}}
 \end{figure}
 
 Figure~\ref{fig:dqn uniform scores dist} shows the distribution of scores when letting the DQN play for 100 games. We can see that despite having an
-average score of \todo{XXX}, the DQN outputs score ranging from 7 to 219. This means that some states haven't been encountered enough for the
-DQN to know significantly which one is better, and can also be slightly related to the $\epsilon$-greedy policy, yet $\epsilon$ is quite small,
+average score of 39.88 (with a standard deviation of 41.14), the DQN outputs score ranging from 7 to 219. This means that some states haven't been encountered
+enough for the DQN to know significantly which one is better, and can also be slightly related to the $\epsilon$-greedy policy, yet $\epsilon$ is quite small,
 and more importantly, the agent selects the action at each frame. This highest score of 219 is probably due to a non-anticipated breaking through
-the brick layer, leading to the ball destroying the upper layer.
+the brick layer, leading to the ball destroying the upper layer whose bricks add 7 points to the score.
 
-\begin{figure}
+\begin{figure}[!h]
 	\includegraphics[width=.5\textwidth]{figures/dqn_uniform_score_distribution}
 	\caption{Distribution of the scores performed by the DQN on 100 plays.\label{fig:dqn uniform scores dist}}
 \end{figure}
 
-\begin{figure*}{!b}
+Figure~\ref{fig:DDQN + DQNP} shows the evolution of reward per episode and of $Q$ estimates on 16,000,000 steps for the DDQN and 7,000,000 for the DQN with
+prioritized memory.
+
+One can observe that the DDQN seems to stabilize around an average reward per episode of 1.4 (though more training time would be needed to ensure convergence),
+like the DQN with uniform memory. Yet, $Q$ estimates of the DQN end up around $2$ whereas they are only half as big for the DDQN.
+
+\begin{figure*}[!t]
+	\vspace{-1.5cm}
 	\begin{subfigure}{.47\textwidth}
-		\includegraphics[width=\textwidth]{figures/dqn_uniform_e_scores}
-		\subcaption{Total score per episode of the DDQN during its learning phase, smoothed using a moving average of size \todo{XXX}.}
+		\includegraphics[width=\textwidth]{figures/ddqn_uniform_e_scores}
+		\subcaption{Total score per episode of the DDQN using uniform memory during its learning phase, smoothed using a moving average of size 1000.}
 	\end{subfigure}
 	\hfill
 	\begin{subfigure}{.47\textwidth}
-		\includegraphics[width=\textwidth]{figures/dqn_uniform_q_values}
-		\caption{Estimation of $Q$ by the DDQN, averaged across actions, for each batch during its learning phase and smoothed using a moving average
-		with a window of size \todo{XXX}.}
+		\includegraphics[width=\textwidth]{figures/ddqn_uniform_q_values}
+		\caption{Estimation of $Q$ by the DDQN using uniform memory, averaged across actions, for each batch during its learning phase and smoothed using a moving average
+		with a window of size 5000.}
 	\end{subfigure}
-	\caption{\todo{Ajouter les plots DDQN et remplacer les paths des includegraphics}.\label{fig:ddqn uniform}}
+	\begin{subfigure}{.47\textwidth}
+		\vspace{-.15cm}
+		\includegraphics[width=\textwidth]{figures/dqn_prioritized_e_scores}
+		\subcaption{Total score per episode of the DQN with prioritized memory during its learning phase, smoothed using a moving average of size 1000.}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{.47\textwidth}
+		\vspace{-.15cm}
+		\includegraphics[width=\textwidth]{figures/dqn_prioritized_q_values}
+		\caption{Estimation of $Q$ by the DQN with prioritized memory, averaged across actions, for each batch during its learning phase and smoothed using a moving average
+		with a window of size 5000.}
+	\end{subfigure}
+	\caption{Adaptation of Figure~\ref{fig:dqn uniform} for both DDQN after 16,000,000 training steps (a and b) and DQN with prioritized memory after 7,000,000
+	training steps (c and d).\label{fig:DDQN + DQNP}}
 \end{figure*}
+
+\begin{figure*}[!t]
+	\vspace{-.3cm}
+	\begin{subfigure}{.47\textwidth}
+		\includegraphics[width=\textwidth]{figures/ddqn_uniform_score_distribution}
+		\caption{Distribution of the score performed by the DDQN with uniform memory on 100 plays.}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{.47\textwidth}
+		\includegraphics[width=\textwidth]{figures/dqn_prioritized_score_distribution}
+		\caption{Distribution of the score performed by the DQN with prioritized memory on 100 plays.}
+	\end{subfigure}
+	\caption{Adaptation of Figure~\ref{fig:dqn uniform scores dist} for both DDQN (a) and DQN with prioritized memory (b).\label{fig:scores DDQN + DQNP}}
+\end{figure*}
+
+\todo{Continuer (ici pour ne pas flinguer la mise en page) l'analyse comparative}
 
 \section{Discussion}
 
@@ -344,7 +391,7 @@ the brick layer, leading to the ball destroying the upper layer.
 
   \todo{Remercier Lenaerts, Nowe, Google, OpenAI, Markov}
 
-\newpage
+%\newpage
 \footnotesize
 \bibliographystyle{apalike}
 \bibliography{article}
