@@ -6,6 +6,8 @@ import os
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.patches import ConnectionPatch
+import cv2
 
 import gym
 from parameters import Parameters
@@ -126,6 +128,7 @@ class Plotter:
         folder = "./out/layers_plots/" + str(Parameters.GAME) + "/" + str(agent.step) + "/"
 
         filters = {"conv1": 32, "conv2": 64, "conv3": 64}
+        filters_scale = {"conv1": 10, "conv2": 20, "conv3": 30}
 
         if not os.path.exists(folder):
             os.makedirs(folder)
@@ -148,8 +151,10 @@ class Plotter:
 
             layer_output = agent.tf_session.run(agent.dqn.layers[layer], {agent.dqn_input: state_t})
 
+            scale = filters_scale[layer]
             for filter in range(filters[layer]):
-                plt.imsave(layer_folder + layer + "_filter_" + str(filter+1) + ".png", layer_output[img,:,:,filter], cmap='gray')
+                plt.imsave(layer_folder + layer + "_filter_" + str(filter+1) + ".png",
+                    cv2.resize(layer_output[img,:,:,filter], (0,0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA), cmap='gray')
 
 
 
@@ -157,12 +162,46 @@ class EmbeddingProjector(TSNE):
     def __init__(self, *args, **kwargs):
         TSNE.__init__(self, *args, **kwargs)
 
-    def save_plot(self, hidden_repr, v_values, folder):
+    def save_plot(self, states, hidden_repr, v_values, folder):
         projected = self.fit_transform(hidden_repr)
-        degrees = (v_values - v_values.min()) / \
-            (v_values.max() - v_values.min())
-        colors = matplotlib.cm.jet(degrees)
-        cs = [colors[i] for i in range(len(projected))]
-        plt.scatter(projected[:, 0], projected[:, 1], color=cs)
-        plt.title("t-distributed Stochastic Neighbor Embedding")
-        plt.savefig(os.path.join(folder, "tsne.png"))
+        print('projected\n\tCreating display')
+
+        # create different axes of different size
+        ax_tsne = plt.subplot2grid((2, 3), (0, 0), rowspan=2, colspan=2)
+        ax_min  = plt.subplot2grid((2, 3), (0, 2))
+        ax_max  = plt.subplot2grid((2, 3), (1, 2))
+        # get related figure to add the colorbar of t-SNE
+        fig = plt.figure(plt.get_fignums()[-1])
+        # create an axis dedicated to the colorbar
+        cbaxis = fig.add_axes([0.01, 0.1, 0.02, 0.8])
+        MIN_COLOR = 'b'
+        MAX_COLOR = 'r'
+        edgecolors = ['none'] * len(projected)
+        edgecolors[v_values.argmin()] = MIN_COLOR
+        edgecolors[v_values.argmax()] = MAX_COLOR
+        points = ax_tsne.scatter(projected[:, 0], projected[:, 1], c=v_values, cmap='summer', edgecolors=edgecolors, lw=1)
+        plt.colorbar(points, cax=cbaxis)
+        ax_tsne.axis('off')
+
+        ax_min.imshow(states[v_values.argmin()], cmap='gray', interpolation='none')
+        set_axis_color(ax_min, MIN_COLOR)
+        ax_min.set_xticks([])
+        ax_min.set_yticks([])
+
+        ax_max.imshow(states[v_values.argmax()], cmap='gray', interpolation='none')
+        set_axis_color(ax_max, MAX_COLOR)
+        ax_max.set_xticks([])
+        ax_max.set_yticks([])
+
+        # add edges connecting points on t-SNE and boxes on the right
+        ax_tsne.add_artist(ConnectionPatch(xyA=projected[v_values.argmin()], xyB=(1,10), coordsA="data", coordsB="data",
+            axesA=ax_tsne, axesB=ax_min, color=MIN_COLOR, lw=1, ls='dashed'))
+        ax_tsne.add_artist(ConnectionPatch(xyA=projected[v_values.argmax()], xyB=(1,10), coordsA="data", coordsB="data",
+            axesA=ax_tsne, axesB=ax_max, color=MAX_COLOR, lw=1, ls='dashed'))
+
+        plt.suptitle("t-distributed Stochastic Neighbor Embedding")
+        plt.savefig(os.path.join(folder, "tsne.png"), dpi=144)
+
+def set_axis_color(ax, col):
+    for key in ('bottom', 'top', 'right', 'left'):
+        ax.spines[key].set_color(col)
