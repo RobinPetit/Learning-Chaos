@@ -14,7 +14,7 @@ class Parameters:
     GAME = "SpaceInvaders-v0"
     DISPLAY = False
 
-    USE_DDDQN = True
+    USE_DDQN = True
     USE_PRIORITIZATION = False
 
     LOADED_FILE = None

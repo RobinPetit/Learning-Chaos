@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# dddqn.py : Double dueling deep Q-network
+# ddqn.py : Dueling deep Q-network
 # author : Robin Petit, Stanislas Gueniffey, Cedric Simar, Antoine Passemiers
 
 from dqn import DQN
@@ -10,7 +10,7 @@ import tensorflow as tf
 from tensorflow.python.ops import array_ops as tf_array_ops
 
 
-class DDDQN(DQN):
+class DuelingDQN(DQN):
 
     def __init__(self, state, action_space):
         DQN.__init__(self, state, action_space)

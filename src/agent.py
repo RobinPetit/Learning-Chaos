@@ -8,7 +8,7 @@ from memory import Memory, PrioritizedMemory
 from parameters import Parameters
 from plot import Plotter
 from dqn import DQN
-from dddqn import DDDQN
+from ddqn import DuelingDQN
 
 from os import path, makedirs
 from datetime import datetime, timedelta
@@ -62,7 +62,7 @@ class Agent:
         self.step = 0
 
         # select the type of DQN based on Parameters
-        dqn_type = DDDQN if Parameters.USE_DDDQN else DQN
+        dqn_type = DuelingDQN if Parameters.USE_DDQN else DQN
 
         # initialize the DQN and target DQN (with respective placeholders)
         self.dqn_input = tf.placeholder(tf.float32,
