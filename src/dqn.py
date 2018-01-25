@@ -145,7 +145,7 @@ class DQN:
         self.layers["fc1"], self.layers["h_fc1"] = fc1, h_fc1
 
         self.learning_parameters["W_fc2"], self.learning_parameters["b_fc2"] = W_fc2, b_fc2
-        self.layers["fc2"], self.layers["h_fc2"] = conv2, h_conv2
+        self.layers["fc2"], self.layers["h_fc2"] = fc2, predicted_q_values
 
         return(predicted_q_values)
 
